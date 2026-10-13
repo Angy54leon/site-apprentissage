@@ -13,6 +13,7 @@ export function parseSmiles(smiles: string): Molecule {
   let prev = -1;
   let pendingOrder: number | null = null;
   let pendingDir: '/' | '\\' | null = null;
+  const backbone: number[] = [];
   let i = 0;
   const s = smiles.trim();
 
@@ -78,12 +79,14 @@ export function parseSmiles(smiles: string): Molecule {
       const h = m[2] ? (m[3] ? Number(m[3]) : 1) : 0;
       mol.atoms.push({ el, explicitH: h });
       connect(mol.atoms.length - 1);
+      if (!stack.length) backbone.push(mol.atoms.length - 1);
       i = end + 1;
     } else {
       const el = ORGANIC.find((e) => s.startsWith(e, i));
       if (!el) throw new SmilesError(`Caractère inattendu « ${ch} » dans ${smiles}`);
       mol.atoms.push({ el });
       connect(mol.atoms.length - 1);
+      if (!stack.length) backbone.push(mol.atoms.length - 1);
       i += el.length;
     }
   }
@@ -91,6 +94,8 @@ export function parseSmiles(smiles: string): Molecule {
   if (rings.size) throw new SmilesError('Cycle non fermé');
   const pb = valenceProblems(mol);
   if (pb.length) throw new SmilesError(`Valence impossible : ${pb[0].message}`);
+  const carbonBackbone = backbone.filter((a) => mol.atoms[a].el === 'C');
+  if (carbonBackbone.length === backbone.length || backbone.length > 1) mol.backbone = backbone;
   return mol;
 }
 

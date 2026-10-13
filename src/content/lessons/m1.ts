@@ -59,7 +59,7 @@ export const M1: Lesson[] = [
     explanation: [
       { t: 'p', text: 'La **chaîne principale** d’un alcane est la **chaîne de carbones continue la plus longue**. Elle donne la racine du nom. Tout ce qui n’en fait pas partie devient un substituant.' },
       { t: 'warn', text: 'Piège classique : la chaîne la plus longue n’est pas forcément celle dessinée à l’horizontale. Elle peut passer par ce qui ressemble à une « ramification ».' },
-      { t: 'mol', smiles: 'CC(CC)CCC', show: ['chain'], caption: 'La chaîne principale (6 C) passe par le « bras » éthyle.' },
+      { t: 'mol', smiles: 'CC(CC)CCC', show: ['chain'], asWritten: true, caption: 'La chaîne principale (6 C) passe par le « bras » éthyle.' },
       { t: 'p', text: 'Si **deux chaînes ont la même longueur**, on choisit celle qui porte le **plus de substituants**.' },
     ],
     rule: [{ t: 'list', ordered: true, items: ['Chaîne la plus longue.', 'À égalité : celle qui porte le plus de substituants.'] }],

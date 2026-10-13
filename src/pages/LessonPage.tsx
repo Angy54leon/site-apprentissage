@@ -64,7 +64,7 @@ export function BlockView({ b }: { b: Block }) {
             {b.caption && <p className="sm:col-span-3 text-center text-sm text-ink-2">{b.caption}</p>}
           </div>
         );
-      return <MoleculeCard smiles={b.smiles} show={b.show} initialMode={b.mode} caption={b.caption} className="max-w-xl mx-auto" />;
+      return <MoleculeCard smiles={b.smiles} show={b.show} initialMode={b.mode} caption={b.caption} asWritten={b.asWritten} className="max-w-xl mx-auto" />;
     case 'table':
       return (
         <div className="overflow-x-auto thin-scroll">

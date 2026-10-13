@@ -178,6 +178,7 @@ export function ExerciseView({ ex, mode = 'learn', onSubmit, onNext, onSimilar, 
             marked={ex.kind === 'implicitH' || ex.kind === 'rs' ? [ex.atom!] : []}
             goodAtoms={goodAtoms}
             coords={ex.coords}
+            asWritten={ex.kind === 'mainChain' || ex.skills.includes('alc-chaine')}
             stereo={ex.stereo?.bond !== undefined ? { bond: ex.stereo.bond, type: ex.stereo.type } : undefined}
           />
           {ex.kind === 'mainChain' && !locked && (

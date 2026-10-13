@@ -7,7 +7,7 @@ export type Block =
   | { t: 'p'; text: string }
   | { t: 'list'; items: string[]; ordered?: boolean }
   | { t: 'tip' | 'warn' | 'info' | 'mnemo'; text: string; title?: string }
-  | { t: 'mol'; smiles: string; caption?: string; show?: ShowOption[]; mode?: 'topo' | 'semi' | 'dev'; compare?: boolean }
+  | { t: 'mol'; smiles: string; caption?: string; show?: ShowOption[]; mode?: 'topo' | 'semi' | 'dev'; compare?: boolean; asWritten?: boolean }
   | { t: 'table'; head: string[]; rows: string[][] };
 
 export interface WorkedStep {

@@ -24,6 +24,8 @@ export interface Molecule {
   bonds: Bond[];
   /** Coordonnées 2D facultatives fournies par l'auteur (stéréochimie). */
   coords?: [number, number][];
+  /** Chaîne « telle qu'écrite » dans le SMILES (atomes hors parenthèses), pour le dessin. */
+  backbone?: number[];
 }
 
 export const VALENCE: Record<Element, number> = {

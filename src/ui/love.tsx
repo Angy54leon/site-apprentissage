@@ -179,7 +179,6 @@ export function LoveLetter({ open, onClose, text, title = 'Mon petit mot pour to
           </button>
         ) : (
           <div className="anim-letter relative rounded-3xl bg-[#fffaf3] dark:bg-surface border border-line p-6 sm:p-8 shadow-2xl max-h-[85vh] overflow-auto">
-            <div className="absolute -top-3 left-1/2 -translate-x-1/2 text-3xl decor">💌</div>
             <h2 className="font-hand text-3xl text-brand text-center mb-3">{title}</h2>
             <div className="font-hand text-[1.45rem] leading-snug text-ink whitespace-pre-line">{text}</div>
             <div className="mt-5 flex flex-wrap gap-2 justify-center">

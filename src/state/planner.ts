@@ -64,7 +64,8 @@ export function buildPlan(state: AppState, horizonDays = 14, from = today()): Pl
     const list: string[] = [];
     let minutes = 0;
     while (li < remaining.length) {
-      const dur = remaining[li].duration * (remaining[li].skills.some((s) => difficult.has(s)) ? 1.3 : 1);
+      const seen = p.seenModules.includes(remaining[li].module);
+      const dur = remaining[li].duration * (remaining[li].skills.some((s) => difficult.has(s)) ? 1.3 : 1) * (seen ? 0.7 : 1);
       if (list.length && minutes + dur > goal.lessonMin * 1.3) break;
       list.push(remaining[li].id);
       minutes += dur;

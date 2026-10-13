@@ -33,6 +33,7 @@ describe('banque de molécules', () => {
       // dessin sans chevauchement
       const pos = layoutSkeletal(mol, r.parentAtoms, r.isRing);
       expect(hasOverlaps(mol, pos, 0.5)).toBe(false);
+      if (mol.backbone && !r.isRing && !/\d/.test(e.smiles)) expect(hasOverlaps(mol, layoutSkeletal(mol, mol.backbone, false), 0.5), 'tel qu’écrit').toBe(false);
     });
   }
 });

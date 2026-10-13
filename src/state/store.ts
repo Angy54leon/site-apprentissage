@@ -135,6 +135,9 @@ export interface AttemptMeta {
 }
 
 export function recordAttempt(ex: Exercise, res: ExerciseResult, meta: AttemptMeta) {
+  // Le test de positionnement sert seulement à placer Julie dans le parcours :
+  // il ne compte ni dans les statistiques ni dans le carnet d'erreurs.
+  if (meta.context === 'placement') return;
   mutate((d) => {
     const t = today();
     d.attempts.push({
@@ -165,8 +168,8 @@ export function recordAttempt(ex: Exercise, res: ExerciseResult, meta: AttemptMe
     }
     // carnet d'erreurs
     const existing = d.mistakes[ex.key];
-    if (res.status === 'incorrect' || res.status === 'partial') {
-      if (meta.context === 'placement') return;
+    const skipped = !res.userAnswer.trim();
+    if ((res.status === 'incorrect' || res.status === 'partial') && !skipped) {
       d.mistakes[ex.key] = {
         key: ex.key,
         kind: ex.kind,

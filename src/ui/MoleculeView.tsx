@@ -26,6 +26,8 @@ export interface MoleculeViewProps {
   coords?: Point[];
   size?: 'sm' | 'md' | 'lg';
   title?: string;
+  /** Dessin « tel qu'écrit » (la chaîne principale n'est pas redressée). */
+  asWritten?: boolean;
 }
 
 const EL_COLOR: Record<string, string> = {
@@ -104,8 +106,12 @@ export function MoleculeView(props: MoleculeViewProps) {
 function SkeletalView(props: MoleculeViewProps & { mol: Molecule; naming: NamingResult | null }) {
   const { mol, naming, show = [], selectable, selected = [], onAtomClick, marked = [], goodAtoms = [], stereo, size = 'md' } = props;
   const pos = useMemo(
-    () => props.coords ?? layoutSkeletal(mol, naming?.parentAtoms, naming?.isRing),
-    [mol, naming, props.coords],
+    () =>
+      props.coords ??
+      (props.asWritten && mol.backbone && !findRings(mol).length
+        ? layoutSkeletal(mol, mol.backbone, false)
+        : layoutSkeletal(mol, naming?.parentAtoms, naming?.isRing)),
+    [mol, naming, props.coords, props.asWritten],
   );
   const adj = useMemo(() => adjacency(mol), [mol]);
   const rings = useMemo(() => findRings(mol), [mol]);
@@ -339,7 +345,7 @@ function SkeletalView(props: MoleculeViewProps & { mol: Molecule; naming: Naming
   return (
     <svg
       viewBox={`${minX} ${minY} ${w} ${h}`}
-      style={{ maxHeight: maxH, width: '100%' }}
+      style={{ maxHeight: maxH, width: '100%', maxWidth: w * (size === 'sm' ? 0.95 : size === 'lg' ? 1.6 : 1.3) }}
       className="block mx-auto select-none"
       role="img"
       aria-label={props.title ?? 'Formule topologique'}
@@ -413,7 +419,7 @@ function GridView(props: MoleculeViewProps & { mol: Molecule; naming: NamingResu
   };
 
   return (
-    <svg viewBox={`${minX} ${minY} ${maxX - minX} ${maxY - minY}`} style={{ maxHeight: props.size === 'sm' ? 140 : 240, width: '100%' }} className="block mx-auto" role="img" aria-label={dev ? 'Formule développée' : 'Formule semi-développée'}>
+    <svg viewBox={`${minX} ${minY} ${maxX - minX} ${maxY - minY}`} style={{ maxHeight: props.size === 'sm' ? 140 : 240, width: '100%', maxWidth: (maxX - minX) * (props.size === 'sm' ? 0.9 : 1.15) }} className="block mx-auto" role="img" aria-label={dev ? 'Formule développée' : 'Formule semi-développée'}>
       {show.includes('chain') &&
         parent.map((a) => {
           const [x, y] = cells[a];

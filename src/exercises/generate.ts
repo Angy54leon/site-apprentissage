@@ -176,8 +176,18 @@ export function structureDistractors(target: Molecule, count: number, rng: Rng):
   );
   const chosen = [...isomers, ...others].slice(0, count);
   if (chosen.length < count) {
-    // compléter avec des molécules de la banque de même niveau
-    const pool = shuffle(MOLECULES, rng);
+    // compléter avec des molécules de la banque proches (même nombre de carbones, même famille)
+    const nC = target.atoms.filter((a) => a.el === 'C').length;
+    const els = new Set(target.atoms.map((a) => a.el));
+    const pool = shuffle(MOLECULES, rng).sort((a, b) => {
+      const score = (e: MoleculeEntry) => {
+        const m = analyse(e.smiles).mol;
+        const c = m.atoms.filter((x) => x.el === 'C').length;
+        const sameEls = [...new Set(m.atoms.map((x) => x.el))].every((x) => els.has(x)) ? 0 : 3;
+        return Math.abs(c - nC) + sameEls;
+      };
+      return score(a) - score(b);
+    });
     for (const e of pool) {
       if (chosen.length >= count) break;
       const m = analyse(e.smiles).mol;
