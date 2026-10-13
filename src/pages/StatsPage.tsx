@@ -1,7 +1,7 @@
 import { ERROR_INFO } from '../chem/nomenclature/grading';
 import { SKILLS, MODULES } from '../content/skills';
 import { useAppState } from '../state/store';
-import { MASTERY_RULE, activeDays, allSkillStats, completedLessons, firstAttempts, history, moduleRates, rate, readiness, recurringErrors, totalActiveMinutes } from '../state/stats';
+import { MASTERY_RULE, activeDays, allSkillStats, chapterRates, completedLessons, firstAttempts, history, rate, readiness, recurringErrors, totalActiveMinutes } from '../state/stats';
 import { formatDate } from '../state/dates';
 import { BarChart, HBar } from '../ui/charts';
 import { Card, PageTitle, Pill, ProgressBar, Stat, pct } from '../ui/kit';
@@ -17,7 +17,7 @@ export function StatsPage() {
   const recurring = recurringErrors(st, 6);
   return (
     <div>
-      <PageTitle emoji="📊" sub="Toutes ces statistiques sont calculées à partir de tes vraies réponses (premiers essais ; les nouvelles tentatives ne te pénalisent pas).">
+      <PageTitle sub="Toutes ces statistiques sont calculées à partir de tes vraies réponses (premiers essais ; les nouvelles tentatives ne te pénalisent pas).">
         Statistiques et progression
       </PageTitle>
       <div className="grid grid-cols-2 lg:grid-cols-5 gap-3 mb-4">
@@ -29,11 +29,11 @@ export function StatsPage() {
       </div>
       <div className="grid gap-4 lg:grid-cols-2">
         <Card>
-          <h2 className="font-extrabold">Exercices par jour (30 derniers jours)</h2>
+          <h2 className="font-semibold">Exercices par jour (30 derniers jours)</h2>
           <BarChart title="Nombre d’exercices par jour" data={hist.map((h) => ({ label: `${Number(h.date.slice(8))}/${h.date.slice(5, 7)}`, value: h.attempts, tip: `${formatDate(h.date)} : ${h.attempts} exercice(s), ${h.minutes} min actives` }))} />
         </Card>
         <Card>
-          <h2 className="font-extrabold">Taux de réussite par jour</h2>
+          <h2 className="font-semibold">Taux de réussite par jour</h2>
           <BarChart
             title="Taux de réussite par jour"
             max={1}
@@ -42,16 +42,16 @@ export function StatsPage() {
           />
         </Card>
         <Card>
-          <h2 className="font-extrabold mb-3">Réussite par chapitre</h2>
+          <h2 className="font-semibold mb-3">Réussite par chapitre</h2>
           <div className="space-y-2">
-            {moduleRates(st).map((m) => (
-              <HBar key={m.module} label={m.label} value={m.rate} sub={`${m.attempts} exercices`} />
+            {chapterRates(st).map((r) => (
+              <HBar key={r.chapter.id} label={`${r.chapter.number}. ${r.chapter.title}`} value={r.rate} sub={`${r.attempts} exercices`} />
             ))}
           </div>
         </Card>
         <Card>
-          <h2 className="font-extrabold mb-2">Préparation à l’examen</h2>
-          <p className="text-3xl font-black text-brand">{pct(ready.value)}</p>
+          <h2 className="font-semibold mb-2">Préparation à l’examen</h2>
+          <p className="text-3xl font-bold text-brand">{pct(ready.value)}</p>
           <ProgressBar value={ready.value} className="my-2" />
           <ul className="text-sm text-ink-2 space-y-0.5">
             <li>Couverture du programme (leçons validées) : {pct(ready.coverage)}</li>
@@ -59,7 +59,7 @@ export function StatsPage() {
             <li>Dernier examen blanc : {ready.exam === null ? 'pas encore fait' : pct(ready.exam)}</li>
           </ul>
           <p className="text-xs text-ink-3 mt-2">Calcul : 40 % couverture + 40 % notions + 20 % examen blanc (50/50 sans examen blanc).</p>
-          <h3 className="font-extrabold mt-4 mb-1">Erreurs récurrentes</h3>
+          <h3 className="font-semibold mt-4 mb-1">Erreurs récurrentes</h3>
           {recurring.length ? (
             <ul className="text-sm space-y-0.5">
               {recurring.map((r) => (
@@ -75,7 +75,7 @@ export function StatsPage() {
         </Card>
       </div>
       <Card className="mt-4">
-        <h2 className="font-extrabold mb-1">Détail par notion</h2>
+        <h2 className="font-semibold mb-1">Détail par notion</h2>
         <p className="text-xs text-ink-3 mb-3">{MASTERY_RULE}</p>
         <div className="overflow-x-auto thin-scroll">
           <table className="w-full text-sm">

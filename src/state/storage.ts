@@ -1,6 +1,5 @@
 // Persistance. Première version : localStorage. L'interface Repository permet
 // d'ajouter plus tard un stockage distant (compte utilisateur + base de données).
-import { ANIMATION_DEFAULTS } from '../config/love';
 import { type AppState, STATE_VERSION } from './types';
 
 export interface Repository {
@@ -9,7 +8,9 @@ export interface Repository {
   clear(): void;
 }
 
-const KEY = 'julies-chemistry-love:v1';
+const KEY = 'nomenclature-organique:v1';
+/** Ancienne clé de sauvegarde : reprise automatique de la progression existante. */
+const LEGACY_KEYS = ['julies-chemistry-love:v1'];
 
 export function defaultState(): AppState {
   return {
@@ -23,11 +24,8 @@ export function defaultState(): AppState {
       goal: { lessonMin: 10, exerciseMin: 10, reviewMin: 5 },
     },
     prefs: {
-      animations: ANIMATION_DEFAULTS.animations,
-      focusMode: ANIMATION_DEFAULTS.focusMode,
+      focusMode: false,
       dark: false,
-      theme: 'rose',
-      showMimi: ANIMATION_DEFAULTS.showMimi,
     },
     lessons: {},
     attempts: [],
@@ -36,16 +34,6 @@ export function defaultState(): AppState {
     exams: [],
     days: {},
     sessionsCompleted: 0,
-    love: {
-      recent: {},
-      calendar: [],
-      secretLetterOpened: false,
-      badges: {},
-      celebratedModules: [],
-      effortShown: [],
-      custom: { messages: [] },
-      pending: [],
-    },
   };
 }
 
@@ -54,18 +42,12 @@ export function normalizeState(raw: unknown): AppState {
   const d = defaultState();
   if (!raw || typeof raw !== 'object') return d;
   const r = raw as Partial<AppState>;
+  // Seules les données d'apprentissage sont reprises (les anciennes préférences
+  // d'apparence et éléments décoratifs éventuels sont ignorés).
   return {
-    ...d,
-    ...r,
     version: STATE_VERSION,
     profile: { ...d.profile, ...(r.profile ?? {}), goal: { ...d.profile.goal, ...(r.profile?.goal ?? {}) } },
-    prefs: { ...d.prefs, ...(r.prefs ?? {}) },
-    love: {
-      ...d.love,
-      ...(r.love ?? {}),
-      custom: { ...d.love.custom, ...(r.love?.custom ?? {}) },
-      pending: r.love?.pending ?? [],
-    },
+    prefs: { focusMode: !!r.prefs?.focusMode, dark: !!r.prefs?.dark },
     lessons: r.lessons ?? {},
     attempts: Array.isArray(r.attempts) ? r.attempts : [],
     skills: r.skills ?? {},
@@ -79,7 +61,13 @@ export function normalizeState(raw: unknown): AppState {
 export class LocalStorageRepository implements Repository {
   load(): AppState | null {
     try {
-      const txt = localStorage.getItem(KEY);
+      let txt = localStorage.getItem(KEY);
+      if (!txt) {
+        for (const k of LEGACY_KEYS) {
+          txt = localStorage.getItem(k);
+          if (txt) break;
+        }
+      }
       return txt ? normalizeState(JSON.parse(txt)) : null;
     } catch {
       return null;
@@ -95,6 +83,7 @@ export class LocalStorageRepository implements Repository {
   clear(): void {
     try {
       localStorage.removeItem(KEY);
+      for (const k of LEGACY_KEYS) localStorage.removeItem(k);
     } catch {
       /* ignore */
     }
@@ -115,7 +104,7 @@ export class MemoryRepository implements Repository {
 }
 
 export function exportState(state: AppState): string {
-  return JSON.stringify({ app: 'julies-chemistry-love', exportedAt: new Date().toISOString(), state }, null, 2);
+  return JSON.stringify({ app: 'nomenclature-organique', exportedAt: new Date().toISOString(), state }, null, 2);
 }
 
 export function importState(text: string): AppState {

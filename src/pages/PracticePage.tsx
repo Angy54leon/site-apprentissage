@@ -18,10 +18,10 @@ const LEVELS = [
   [5, 'Niveau examen'],
 ] as const;
 
-export function PracticePage() {
+export function PracticePage({ embedded = false }: { embedded?: boolean }) {
   const st = useAppState();
   const [params] = useSearchParams();
-  const [skills, setSkills] = useState<string[]>(() => (params.get('mix') ? SKILLS.filter((s) => !s.advanced).map((s) => s.id) : learnedSkills(st).slice(0, 6)));
+  const [skills, setSkills] = useState<string[]>(() => (params.get('mix') || params.get('chrono') ? SKILLS.filter((s) => !s.advanced).map((s) => s.id) : learnedSkills(st).slice(0, 6)));
   const [level, setLevel] = useState<number>(params.get('mix') ? 3 : 0);
   const [count, setCount] = useState(10);
   const [chrono, setChrono] = useState(!!params.get('chrono'));
@@ -66,13 +66,13 @@ export function PracticePage() {
 
   return (
     <div>
-      <PageTitle emoji="🎯" sub="Choisis les notions et le niveau. En mode adaptatif, la difficulté monte quand tu réussis et redescend quand ça coince.">
+      {!embedded && <PageTitle sub="Choisis les notions et le niveau. En mode adaptatif, la difficulté monte quand tu réussis et redescend quand ça coince.">
         Entraînement libre
-      </PageTitle>
+      </PageTitle>}
       <div className="grid gap-4 lg:grid-cols-[1.5fr_1fr]">
         <Card>
           <div className="flex justify-between items-center mb-2">
-            <h2 className="font-extrabold">Notions ({skills.length})</h2>
+            <h2 className="font-semibold">Notions ({skills.length})</h2>
             <div className="flex gap-1">
               <Button size="sm" variant="ghost" onClick={() => setSkills(learnedSkills(st))}>
                 Notions vues
@@ -96,7 +96,7 @@ export function PracticePage() {
                       key={s.id}
                       onClick={() => toggle(s.id)}
                       aria-pressed={skills.includes(s.id)}
-                      className={cx('rounded-xl border px-2.5 py-1 text-sm font-semibold', skills.includes(s.id) ? 'border-brand bg-brand-soft/40' : 'border-line hover:border-brand-2')}
+                      className={cx('rounded-xl border px-2.5 py-1 text-sm font-semibold', skills.includes(s.id) ? 'border-brand bg-brand-soft' : 'border-line hover:border-brand-2')}
                     >
                       {s.label}
                       {s.advanced ? ' (avancé)' : ''}
@@ -109,7 +109,7 @@ export function PracticePage() {
         </Card>
         <Card className="space-y-4">
           <div>
-            <h2 className="font-extrabold mb-2">Niveau</h2>
+            <h2 className="font-semibold mb-2">Niveau</h2>
             <div className="grid gap-1.5">
               {LEVELS.map(([v, l]) => (
                 <Chip key={v} on={level === v} onClick={() => setLevel(v)} block>
@@ -119,19 +119,19 @@ export function PracticePage() {
             </div>
           </div>
           <label className="block">
-            <span className="font-extrabold">Nombre d’exercices : {count}</span>
+            <span className="font-semibold">Nombre d’exercices : {count}</span>
             <input type="range" min={5} max={30} step={5} value={count} onChange={(e) => setCount(Number(e.target.value))} className="w-full accent-[var(--brand)]" />
           </label>
           <div className="flex flex-col gap-2">
             <Chip on={chrono} onClick={() => setChrono(!chrono)} block>
-              ⏱️ Chronométré (90 s par question)
+              Chronométré (90 s par question)
             </Chip>
             <Chip on={noHints} onClick={() => setNoHints(!noHints)} block>
-              🙈 Sans indice (exercices de synthèse)
+              Sans indice (exercices de synthèse)
             </Chip>
           </div>
           <Button size="lg" className="w-full" onClick={start} disabled={!skills.length}>
-            C’est parti 💗
+            Lancer la série
           </Button>
         </Card>
       </div>

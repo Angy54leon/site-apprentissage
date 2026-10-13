@@ -104,23 +104,9 @@ export interface Profile {
 }
 
 export interface Prefs {
-  animations: boolean;
+  /** Mode concentration : interface réduite au minimum pendant le travail. */
   focusMode: boolean;
   dark: boolean;
-  theme: string;
-  showMimi: boolean;
-}
-
-export interface LoveState {
-  recent: Record<string, number[]>;
-  calendar: { date: string; index: number }[];
-  secretLetterOpened: boolean;
-  badges: Record<string, string>;
-  celebratedModules: string[];
-  effortShown: number[];
-  custom: { letter?: string; secretLetter?: string; messages: string[] };
-  /** File d'événements à célébrer à l'écran (badges, chapitres…). */
-  pending: { type: 'badge' | 'chapter' | 'session' | 'effort'; id: string }[];
 }
 
 export interface AppState {
@@ -134,5 +120,4 @@ export interface AppState {
   exams: ExamResult[];
   days: Record<string, DayLog>;
   sessionsCompleted: number;
-  love: LoveState;
 }

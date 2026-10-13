@@ -28,14 +28,14 @@ export function LabPage() {
   };
   return (
     <div>
-      <PageTitle emoji="🔬" sub="Du nom vers la structure, et de la structure vers le nom, en dévoilant chaque étape : chaîne principale, numérotation, ramifications, insaturations, fonctions, nom final.">
+      <PageTitle sub="Du nom vers la structure, et de la structure vers le nom, en dévoilant chaque étape : chaîne principale, numérotation, ramifications, insaturations, fonctions, nom final.">
         Comprendre une molécule
       </PageTitle>
       <div className="grid gap-4 lg:grid-cols-[1fr_2fr]">
         <div className="space-y-4">
           <Card>
-            <h2 className="font-extrabold mb-2">Du nom à la structure</h2>
-            <input value={nameInput} onChange={(e) => setNameInput(e.target.value)} onKeyDown={(e) => e.key === 'Enter' && fromName()} placeholder="ex. : 3-éthyl-2-méthylpentane" className="w-full rounded-xl border-2 border-line bg-surface px-3 py-2" aria-label="Nom à dessiner" />
+            <h2 className="font-semibold mb-2">Du nom à la structure</h2>
+            <input value={nameInput} onChange={(e) => setNameInput(e.target.value)} onKeyDown={(e) => e.key === 'Enter' && fromName()} placeholder="ex. : 3-éthyl-2-méthylpentane" className="w-full rounded-xl border border-line bg-surface px-3 py-2" aria-label="Nom à dessiner" />
             <Button className="mt-2" size="sm" onClick={fromName} disabled={!nameInput.trim()}>
               Dessiner
             </Button>
@@ -55,7 +55,7 @@ export function LabPage() {
             )}
           </Card>
           <Card>
-            <h2 className="font-extrabold mb-2">Choisir dans la banque ({MOLECULES.length} molécules vérifiées)</h2>
+            <h2 className="font-semibold mb-2">Choisir dans la banque ({MOLECULES.length} molécules vérifiées)</h2>
             <input value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Filtrer…" className="w-full rounded-xl border border-line bg-surface px-3 py-2 mb-2" aria-label="Filtrer les molécules" />
             <ul className="max-h-80 overflow-auto thin-scroll text-sm">
               {list.map((m) => (

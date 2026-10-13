@@ -2,12 +2,12 @@
 import { useEffect, useRef, useState, type ReactNode } from 'react';
 import type { Exercise, ExerciseResult } from '../../exercises/types';
 import { similarExercise } from '../../exercises/generate';
-import { recordAttempt, pickMessage, type AttemptMeta } from '../../state/store';
+import { recordAttempt, updatePrefs, useAppState, type AttemptMeta } from '../../state/store';
 import type { AttemptContext } from '../../state/types';
 import { useActiveTimer } from '../useActiveTimer';
 import { ExerciseView } from './ExerciseView';
 import { Button, Card, ProgressBar, cx } from '../kit';
-import { burst, Mimi } from '../love';
+import { Icon } from '../icons';
 
 export interface RunResult {
   ex: Exercise;
@@ -38,7 +38,6 @@ export function ExerciseRunner({ exercises, context, mode = 'learn', noHints, se
   const [left, setLeft] = useState<number | null>(secondsPerQuestion ?? totalSeconds ?? null);
   const [timeUp, setTimeUp] = useState(false);
   const firstResult = useRef(new Map<string, ExerciseResult>());
-  const [endMsg, setEndMsg] = useState('');
   useActiveTimer(timeKind, !finished);
 
   useEffect(() => {
@@ -66,9 +65,6 @@ export function ExerciseRunner({ exercises, context, mode = 'learn', noHints, se
 
   const finish = (all: RunResult[]) => {
     setFinished(true);
-    setEndMsg(pickMessage('setDone'));
-    const good = all.filter((r) => r.res.status === 'correct').length;
-    if (all.length && good / all.length >= 0.7) burst('confetti');
     onFinish(all);
   };
 
@@ -109,7 +105,7 @@ export function ExerciseRunner({ exercises, context, mode = 'learn', noHints, se
 
   if (finished) {
     if (renderSummary) return <>{renderSummary(results)}</>;
-    return <RunSummary results={results} message={endMsg} />;
+    return <RunSummary results={results} />;
   }
 
   const timerColor = left !== null && left <= 10 ? 'text-bad' : 'text-ink-2';
@@ -117,17 +113,18 @@ export function ExerciseRunner({ exercises, context, mode = 'learn', noHints, se
     <div className="max-w-3xl mx-auto">
       <div className="flex items-center gap-3 mb-4">
         <div className="flex-1">
-          {title && <div className="text-xs font-bold uppercase tracking-wide text-ink-3 mb-1">{title}</div>}
+          {title && <div className="text-xs font-medium uppercase tracking-wide text-ink-2 mb-1.5">{title}</div>}
           <ProgressBar value={idx / list.length} label="Progression de la série" />
         </div>
-        <span className="text-sm font-bold text-ink-2 tabular-nums">
+        <span className="text-sm font-medium text-ink-2 tabular-nums">
           {idx + 1}/{list.length}
         </span>
         {left !== null && (
-          <span className={cx('text-sm font-extrabold tabular-nums', timerColor)} aria-live="off">
-            ⏱ {Math.floor(left / 60)}:{String(left % 60).padStart(2, '0')}
+          <span className={cx('inline-flex items-center gap-1 text-sm font-semibold tabular-nums', timerColor)} aria-live="off">
+            <Icon name="clock" size={15} /> {Math.floor(left / 60)}:{String(left % 60).padStart(2, '0')}
           </span>
         )}
+        <FocusToggle />
       </div>
       <Card>
         <ExerciseView
@@ -146,14 +143,29 @@ export function ExerciseRunner({ exercises, context, mode = 'learn', noHints, se
   );
 }
 
+/** Bouton du mode concentration (interface réduite au minimum). */
+export function FocusToggle() {
+  const st = useAppState();
+  return (
+    <button
+      type="button"
+      onClick={() => updatePrefs({ focusMode: !st.prefs.focusMode })}
+      aria-pressed={st.prefs.focusMode}
+      title="Mode concentration"
+      className={cx('inline-flex items-center gap-1.5 rounded-lg border px-2.5 py-1 text-xs font-medium', st.prefs.focusMode ? 'border-brand bg-brand-soft text-brand' : 'border-line text-ink-2 hover:bg-surface-2')}
+    >
+      <Icon name="focus" size={15} /> <span className="hidden sm:inline">{st.prefs.focusMode ? 'Quitter la concentration' : 'Concentration'}</span>
+    </button>
+  );
+}
+
 export function RunSummary({ results, message, children }: { results: RunResult[]; message?: string; children?: ReactNode }) {
   const good = results.filter((r) => r.res.status === 'correct').length;
   const partial = results.filter((r) => r.res.status === 'partial').length;
   return (
-    <Card className="max-w-2xl mx-auto text-center anim-pop">
-      <Mimi size={90} mood={good >= results.length * 0.7 ? 'cheer' : 'happy'} className="mx-auto decor" />
-      <h2 className="text-2xl font-extrabold mt-2">Bilan de la série</h2>
-      <p className="text-4xl font-black mt-2 text-brand">
+    <Card className="max-w-2xl mx-auto text-center anim-fade">
+      <h2 className="text-2xl font-semibold mt-2">Bilan de la série</h2>
+      <p className="text-4xl font-bold mt-2 text-brand">
         {good}/{results.length}
       </p>
       <p className="text-ink-2">
@@ -161,11 +173,11 @@ export function RunSummary({ results, message, children }: { results: RunResult[
         {partial ? `, ${partial} presque` : ''}
         {results.length - good - partial ? `, ${results.length - good - partial} à revoir (ajoutée${results.length - good - partial > 1 ? 's' : ''} au carnet d’erreurs)` : ''}.
       </p>
-      {message && <p className="decor font-hand text-2xl text-brand mt-3">{message}</p>}
+      {message && <p className="mt-3 text-ink-2">{message}</p>}
       <ul className="text-left mt-4 space-y-1 text-sm">
         {results.map((r, i) => (
           <li key={i} className="flex gap-2 items-start rounded-xl bg-surface-2 px-3 py-2">
-            <span className={cx('font-black', r.res.status === 'correct' ? 'text-ok' : r.res.status === 'partial' ? 'text-warn' : 'text-bad')}>
+            <span className={cx('font-bold', r.res.status === 'correct' ? 'text-ok' : r.res.status === 'partial' ? 'text-warn' : 'text-bad')}>
               {r.res.status === 'correct' ? '✓' : r.res.status === 'partial' ? '≈' : '✗'}
             </span>
             <span className="flex-1">

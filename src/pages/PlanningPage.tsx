@@ -8,9 +8,8 @@ import { WEEKDAY_LABELS, addDays, formatDate, today } from '../state/dates';
 import { Button, Card, Empty, PageTitle, Pill, cx } from '../ui/kit';
 import { Chip, GoalEditor } from './OnboardingPage';
 
-const TYPE_ICON: Record<string, string> = { study: '📖', light: '🌱', revision: '🔁', 'exam-prep': '📝', rest: '☁️', exam: '🎓' };
 
-export function PlanningPage() {
+export function PlanningPage({ embedded = false }: { embedded?: boolean }) {
   const st = useAppState();
   const t = today();
   const [view, setView] = useState<'day' | 'week'>('week');
@@ -31,10 +30,10 @@ export function PlanningPage() {
 
   return (
     <div>
-      <PageTitle emoji="💗" sub="Ton planning se recalcule tout seul à partir de ta progression réelle. Les jours légers évitent la surcharge.">
+      {!embedded && <PageTitle sub="Ton planning se recalcule tout seul à partir de ta progression réelle. Les jours légers évitent la surcharge.">
         Mon planning de révision
-      </PageTitle>
-      {plan.warning && <p className="mb-4 rounded-2xl bg-warn-soft text-warn px-4 py-3 text-sm font-semibold">{plan.warning}</p>}
+      </PageTitle>}
+      {plan.warning && <p className="mb-4 rounded-lg bg-warn-soft text-warn px-4 py-3 text-sm font-semibold">{plan.warning}</p>}
       <div className="flex flex-wrap gap-2 mb-4 items-center">
         <div className="inline-flex rounded-xl bg-surface-2 border border-line p-0.5 font-bold text-sm">
           {(['day', 'week'] as const).map((v) => (
@@ -43,7 +42,7 @@ export function PlanningPage() {
             </button>
           ))}
         </div>
-        <Button to="/seance">Commencer ma séance 💗</Button>
+        <Button to="/seance">Commencer ma séance</Button>
         <Button variant="soft" onClick={() => setEdit(!edit)}>
           {edit ? 'Fermer' : 'Modifier mon planning'}
         </Button>
@@ -84,11 +83,11 @@ export function PlanningPage() {
 
       {view === 'day' ? (
         <Card>
-          <h2 className="font-extrabold mb-2">{formatDate(t)}</h2>
+          <h2 className="font-semibold mb-2">{formatDate(t)}</h2>
           <ul className="space-y-2">
             {tasks.map((task) => (
               <li key={task.id} className="flex items-center gap-2 rounded-xl bg-surface-2 px-3 py-2">
-                <span className={cx('w-5 h-5 rounded-full grid place-items-center text-xs font-black', done.includes(task.id) ? 'bg-ok text-white' : 'border-2 border-line')}>{done.includes(task.id) ? '✓' : ''}</span>
+                <span className={cx('w-5 h-5 rounded-full grid place-items-center text-xs font-bold', done.includes(task.id) ? 'bg-ok text-white' : 'border border-line')}>{done.includes(task.id) ? '✓' : ''}</span>
                 <span className="flex-1">{task.title}</span>
                 <span className="text-xs text-ink-3">~{task.minutes} min</span>
               </li>
@@ -111,20 +110,19 @@ export function PlanningPage() {
           </div>
           <div className="grid sm:grid-cols-2 lg:grid-cols-7 gap-2">
             {week.map((d) => (
-              <div key={d.date} className={cx('rounded-2xl border p-2 min-h-32', d.date === t ? 'border-brand bg-brand-soft/20' : 'border-line bg-surface')}>
+              <div key={d.date} className={cx('rounded-lg border p-2 min-h-32', d.date === t ? 'border-brand bg-brand-soft' : 'border-line bg-surface')}>
                 <div className="flex justify-between items-center">
-                  <span className="text-xs font-extrabold uppercase">{formatDate(d.date).split(' ').slice(0, 2).join(' ')}</span>
-                  <span>{TYPE_ICON[d.type]}</span>
+                  <span className="text-xs font-semibold uppercase">{formatDate(d.date).split(' ').slice(0, 2).join(' ')}</span>
                 </div>
-                <div className="text-[11px] font-bold text-ink-3 mb-1">
+                <div className="text-[11px] font-medium text-ink-2 mb-1">
                   {DAY_TYPE_LABEL[d.type]}
                   {d.minutes ? ` · ${d.minutes} min` : ''}
-                  {st.days[d.date]?.sessionDone ? ' · ✓' : ''}
+                  {st.days[d.date]?.sessionDone ? ' · terminée' : ''}
                 </div>
                 <ul className="space-y-1">
                   {d.tasks.map((task) => (
                     <li key={task.id} className="text-xs rounded-lg bg-surface-2 px-1.5 py-1 leading-tight">
-                      {task.kind === 'lesson' ? '📖 ' : task.kind === 'review' ? '🔁 ' : task.kind === 'practice' ? '✏️ ' : task.kind === 'mistakes' ? '📒 ' : '📝 '}
+                      
                       {task.title}
                     </li>
                   ))}
@@ -137,7 +135,7 @@ export function PlanningPage() {
 
       <div className="grid gap-4 md:grid-cols-3 mt-4">
         <Card>
-          <h2 className="font-extrabold mb-2">Révisions en retard</h2>
+          <h2 className="font-semibold mb-2">Révisions en retard</h2>
           {overdue.length ? (
             <ul className="text-sm space-y-1">
               {overdue.map((s) => (
@@ -147,7 +145,7 @@ export function PlanningPage() {
               ))}
             </ul>
           ) : (
-            <p className="text-sm text-ink-2">Aucune révision en retard. 🌸</p>
+            <p className="text-sm text-ink-2">Aucune révision en retard.</p>
           )}
           {overdue.length > 0 && (
             <Button to="/revisions" size="sm" variant="soft" className="mt-2">
@@ -156,8 +154,8 @@ export function PlanningPage() {
           )}
         </Card>
         <Card>
-          <h2 className="font-extrabold mb-2">Prochaines échéances</h2>
-          {examIn !== null && examIn >= 0 && <p className="text-sm font-bold mb-1">🎓 Examen le {formatDate(st.profile.examDate!)}</p>}
+          <h2 className="font-semibold mb-2">Prochaines échéances</h2>
+          {examIn !== null && examIn >= 0 && <p className="text-sm font-bold mb-1">Examen le {formatDate(st.profile.examDate!)}</p>}
           {upcoming.length ? (
             <ul className="text-sm space-y-1">
               {upcoming.slice(0, 8).map((u) => (
@@ -172,11 +170,11 @@ export function PlanningPage() {
           )}
         </Card>
         <Card>
-          <h2 className="font-extrabold mb-2">Séances terminées ({finished.length})</h2>
+          <h2 className="font-semibold mb-2">Séances terminées ({finished.length})</h2>
           {finished.length ? (
             <ul className="text-sm space-y-1 max-h-48 overflow-auto thin-scroll">
               {finished.map((d) => (
-                <li key={d}>💗 {formatDate(d)}</li>
+                <li key={d}>{formatDate(d)}</li>
               ))}
             </ul>
           ) : (

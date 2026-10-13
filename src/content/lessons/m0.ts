@@ -67,7 +67,7 @@ export const M0: Lesson[] = [
       answer: 'C₂H₄BrCl',
     },
     mistake: { wrong: '« Co » est le monoxyde de carbone.', right: '« Co » est le cobalt ; CO (deux majuscules) est le monoxyde de carbone.', why: 'La casse des lettres compte : chaque nouvel élément commence par une majuscule.' },
-    mnemonic: 'H-O-N-C : 1, 2, 3, 4 liaisons ! (« HONC if you love chemistry »)',
+    mnemonic: '« HONC » : H, O, N, C forment respectivement 1, 2, 3 et 4 liaisons.',
     examples: [{ smiles: 'CCN', comment: 'Un atome d’azote N.' }, { smiles: 'CCBr', comment: 'Un atome de brome Br.' }],
     guided: [{ kind: 'q', id: 'b4' }, { kind: 'q', id: 'b5' }],
     autonomous: [{ kind: 'q', id: 'b6' }, { kind: 'q', id: 'b7' }],

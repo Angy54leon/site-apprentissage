@@ -6,12 +6,10 @@ import { gradeExercise, matchNames, type Answer } from '../../exercises/grade';
 import { analyse } from '../../exercises/generate';
 import { ERROR_INFO } from '../../chem/nomenclature/grading';
 import { LESSON_BY_ID } from '../../content/lessons';
-import { UNLOCK } from '../../config/love';
 import { MoleculeView, type MolMode } from '../MoleculeView';
 import { ModeSwitch, MoleculeExplorer } from '../MoleculeCard';
 import { Button, Pill, Rich, cx } from '../kit';
-import { burst } from '../love';
-import { pickMessage } from '../../state/store';
+import { Icon } from '../icons';
 import { Link } from 'react-router-dom';
 
 export interface SubmitMeta {
@@ -47,7 +45,6 @@ export function ExerciseView({ ex, mode = 'learn', onSubmit, onNext, onSimilar, 
   const [result, setResult] = useState<ExerciseResult | null>(null);
   const [hints, setHints] = useState(0);
   const [tries, setTries] = useState(0);
-  const [loveMsg, setLoveMsg] = useState<string | null>(null);
   const [selfAssessed, setSelfAssessed] = useState(false);
   const [molMode, setMolMode] = useState<MolMode>('topo');
   const started = useRef(Date.now());
@@ -57,7 +54,6 @@ export function ExerciseView({ ex, mode = 'learn', onSubmit, onNext, onSimilar, 
     setResult(null);
     setHints(0);
     setTries(0);
-    setLoveMsg(null);
     setSelfAssessed(false);
     setMolMode('topo');
     started.current = Date.now();
@@ -97,13 +93,7 @@ export function ExerciseView({ ex, mode = 'learn', onSubmit, onNext, onSimilar, 
     setResult(res);
     setTries((t) => t + 1);
     if (res.status !== 'unknown') onSubmit(res, meta);
-    if (res.status === 'correct') {
-      if (Math.random() < UNLOCK.bravoProbability || tries > 0) {
-        setLoveMsg(pickMessage('correct'));
-        burst('hearts');
-      } else setLoveMsg(null);
-    } else if (res.status === 'incorrect') setLoveMsg(pickMessage('wrong'));
-    else if (res.status === 'partial') setLoveMsg(pickMessage('partial'));
+
   };
 
   useEffect(() => {
@@ -114,7 +104,6 @@ export function ExerciseView({ ex, mode = 'learn', onSubmit, onNext, onSimilar, 
   const retry = () => {
     setResult(null);
     setAnswer({});
-    setLoveMsg(null);
     started.current = Date.now();
   };
 
@@ -151,12 +140,12 @@ export function ExerciseView({ ex, mode = 'learn', onSubmit, onNext, onSimilar, 
         <Pill tone="brand">{KIND_LABEL[ex.kind]}</Pill>
         <Pill>Niveau {['', 'débutant', 'facile', 'intermédiaire', 'difficile', 'examen'][ex.level] ?? ex.level}</Pill>
       </div>
-      <h2 className="text-lg sm:text-xl font-extrabold mb-3">
+      <h2 className="text-lg sm:text-xl font-semibold mb-3">
         <Rich text={ex.prompt} />
       </h2>
 
       {showMolecule && (
-        <div className="rounded-2xl bg-surface border border-line p-3 mb-3">
+        <div className="rounded-lg bg-surface border border-line p-3 mb-3">
           {canSwitch && !cyclic && (
             <div className="mb-2">
               <ModeSwitch mode={molMode} setMode={setMolMode} />
@@ -196,12 +185,13 @@ export function ExerciseView({ ex, mode = 'learn', onSubmit, onNext, onSimilar, 
         <div className="mt-3">
           {ex.hints.slice(0, hints).map((h, i) => (
             <p key={i} className="text-sm rounded-xl bg-info-soft text-info px-3 py-2 mb-1.5">
-              💡 <Rich text={h} />
+              <span className="font-medium">Indice {i + 1} : </span>
+              <Rich text={h} />
             </p>
           ))}
           {hints < ex.hints.length && (
             <Button variant="ghost" size="sm" onClick={() => setHints((h) => h + 1)}>
-              💡 {hints === 0 ? 'Un indice' : 'Un autre indice'} ({ex.hints.length - hints} restant{ex.hints.length - hints > 1 ? 's' : ''})
+              <Icon name="lightbulb" size={16} /> {hints === 0 ? 'Afficher un indice' : 'Indice suivant'} ({ex.hints.length - hints} restant{ex.hints.length - hints > 1 ? 's' : ''})
             </Button>
           )}
         </div>
@@ -224,7 +214,6 @@ export function ExerciseView({ ex, mode = 'learn', onSubmit, onNext, onSimilar, 
         <Feedback
           ex={ex}
           result={result}
-          loveMsg={loveMsg}
           done={done}
           onSelfAssess={selfAssess}
           onRetry={result.status !== 'correct' ? retry : undefined}
@@ -269,8 +258,8 @@ function AnswerInput({ ex, answer, setAnswer, locked, result, onEnter }: { ex: E
           else setAnswer({ choice: [i] });
         }}
         className={cx(
-          'text-left rounded-2xl border-2 px-4 py-3 font-semibold transition',
-          isAnswer ? 'border-ok bg-ok-soft' : wrongPick ? 'border-bad bg-bad-soft' : chosen ? 'border-brand bg-brand-soft/30' : 'border-line bg-surface hover:border-brand-2',
+          'text-left rounded-lg border px-4 py-3 font-semibold transition',
+          isAnswer ? 'border-ok bg-ok-soft' : wrongPick ? 'border-bad bg-bad-soft' : chosen ? 'border-brand bg-brand-soft' : 'border-line bg-surface hover:border-brand-2',
         )}
         aria-pressed={chosen}
       >
@@ -292,7 +281,7 @@ function AnswerInput({ ex, answer, setAnswer, locked, result, onEnter }: { ex: E
             onKeyDown={(e) => e.key === 'Enter' && onEnter()}
             disabled={locked}
             placeholder={ex.kind === 'name' ? 'Écris le nom ici…' : 'Exemple : C4H10'}
-            className="w-full rounded-2xl border-2 border-line bg-surface px-4 py-3 text-lg font-semibold focus:border-brand-2 outline-none"
+            className="w-full rounded-lg border border-line bg-surface px-4 py-3 text-lg font-semibold focus:border-brand-2 outline-none"
             autoComplete="off"
             autoCapitalize="off"
             spellCheck={false}
@@ -319,14 +308,14 @@ function AnswerInput({ ex, answer, setAnswer, locked, result, onEnter }: { ex: E
           onChange={(e) => setAnswer({ number: e.target.value === '' ? undefined : Number(e.target.value) })}
           onKeyDown={(e) => e.key === 'Enter' && onEnter()}
           disabled={locked}
-          className="w-32 rounded-2xl border-2 border-line bg-surface px-4 py-3 text-xl font-bold focus:border-brand-2 outline-none"
+          className="w-32 rounded-lg border border-line bg-surface px-4 py-3 text-xl font-bold focus:border-brand-2 outline-none"
           aria-label="Ta réponse (nombre)"
         />
       );
     case 'complete': {
       let bi = -1;
       return (
-        <div className="flex flex-wrap items-center gap-1 text-lg font-bold rounded-2xl bg-surface-2 border border-line p-3">
+        <div className="flex flex-wrap items-center gap-1 text-lg font-bold rounded-lg bg-surface-2 border border-line p-3">
           {(ex.template ?? []).map((t, i) => {
             if (t.text !== undefined) return <span key={i}>{t.text}</span>;
             bi++;
@@ -344,7 +333,7 @@ function AnswerInput({ ex, answer, setAnswer, locked, result, onEnter }: { ex: E
                   setAnswer({ blanks: b });
                 }}
                 onKeyDown={(e) => e.key === 'Enter' && onEnter()}
-                className={cx('w-16 rounded-lg border-2 bg-surface px-2 py-1 text-center', ok === null ? 'border-brand-2' : ok ? 'border-ok' : 'border-bad')}
+                className={cx('w-16 rounded-lg border bg-surface px-2 py-1 text-center', ok === null ? 'border-brand-2' : ok ? 'border-ok' : 'border-bad')}
                 aria-label={`Indice ${k + 1}`}
                 inputMode="numeric"
               />
@@ -366,7 +355,7 @@ function AnswerInput({ ex, answer, setAnswer, locked, result, onEnter }: { ex: E
                 type="button"
                 disabled={locked}
                 onClick={() => setAnswer({ bool: b })}
-                className={cx('flex-1 rounded-2xl border-2 px-4 py-3 font-extrabold', isAnswer ? 'border-ok bg-ok-soft' : chosen ? 'border-brand bg-brand-soft/30' : 'border-line bg-surface hover:border-brand-2')}
+                className={cx('flex-1 rounded-lg border px-4 py-3 font-semibold', isAnswer ? 'border-ok bg-ok-soft' : chosen ? 'border-brand bg-brand-soft' : 'border-line bg-surface hover:border-brand-2')}
                 aria-pressed={chosen}
               >
                 {ex.kind === 'judge' ? (b ? 'Oui, il est correct' : 'Non, il est faux') : b ? 'Vrai' : 'Faux'}
@@ -388,7 +377,7 @@ function AnswerInput({ ex, answer, setAnswer, locked, result, onEnter }: { ex: E
                 type="button"
                 disabled={locked}
                 onClick={() => setAnswer({ choice: [i] })}
-                className={cx('rounded-2xl border-2 p-2 bg-surface', isAnswer ? 'border-ok bg-ok-soft' : wrongPick ? 'border-bad' : chosen ? 'border-brand' : 'border-line hover:border-brand-2')}
+                className={cx('rounded-lg border p-2 bg-surface', isAnswer ? 'border-ok bg-ok-soft' : wrongPick ? 'border-bad' : chosen ? 'border-brand' : 'border-line hover:border-brand-2')}
                 aria-pressed={chosen}
                 aria-label={c.label}
               >
@@ -410,7 +399,7 @@ function AnswerInput({ ex, answer, setAnswer, locked, result, onEnter }: { ex: E
             const v = answer.matches?.[i] ?? -1;
             const ok = result ? names[v] === it.name : null;
             return (
-              <div key={i} className={cx('rounded-2xl border-2 p-2 bg-surface', ok === null ? 'border-line' : ok ? 'border-ok' : 'border-bad')}>
+              <div key={i} className={cx('rounded-lg border p-2 bg-surface', ok === null ? 'border-line' : ok ? 'border-ok' : 'border-bad')}>
                 <MoleculeView smiles={it.smiles} size="sm" naming={null} />
                 <select
                   value={v}
@@ -450,7 +439,6 @@ function AnswerInput({ ex, answer, setAnswer, locked, result, onEnter }: { ex: E
 function Feedback({
   ex,
   result,
-  loveMsg,
   done,
   onSelfAssess,
   onRetry,
@@ -460,7 +448,6 @@ function Feedback({
 }: {
   ex: Exercise;
   result: ExerciseResult;
-  loveMsg: string | null;
   done: boolean;
   onSelfAssess: (ok: boolean) => void;
   onRetry?: () => void;
@@ -473,12 +460,11 @@ function Feedback({
   const nameKinds = ['name', 'complete', 'judge', 'findError', 'mainChain', 'numbering', 'structure'];
   const lessons = [...new Set(result.errorCodes.map((c) => ERROR_INFO[c]?.lesson).filter(Boolean))];
   return (
-    <div className={cx('mt-4 rounded-2xl border p-4 anim-pop', STATUS_STYLE[result.status])} role="status" aria-live="polite">
-      {loveMsg && <p className="decor font-hand text-xl text-brand mb-1">{loveMsg}</p>}
+    <div className={cx('mt-4 rounded-lg border p-4 anim-fade', STATUS_STYLE[result.status])} role="status" aria-live="polite">
       <div className="flex items-start gap-2">
-        <span className="text-2xl font-black leading-none mt-0.5">{STATUS_ICON[result.status]}</span>
+        <span className="text-2xl font-bold leading-none mt-0.5">{STATUS_ICON[result.status]}</span>
         <div className="flex-1">
-          <p className="font-extrabold text-lg">{result.headline}</p>
+          <p className="font-semibold text-lg">{result.headline}</p>
           {result.status !== 'correct' && result.expected && (
             <p className="mt-1">
               Réponse attendue : <strong className="text-ink">{result.expected}</strong>
@@ -546,10 +532,10 @@ function Feedback({
       {naming && nameKinds.includes(ex.kind) && (
         <div className="mt-3">
           <Button variant="soft" size="sm" onClick={() => setMethod((m) => !m)}>
-            {method ? 'Masquer la méthode' : '🔎 Voir la méthode pas à pas'}
+            {method ? 'Masquer le raisonnement' : 'Voir le raisonnement pas à pas'}
           </Button>
           {method && (
-            <div className="mt-3 rounded-2xl bg-surface p-3 border border-line">
+            <div className="mt-3 rounded-lg bg-surface p-3 border border-line">
               <MoleculeExplorer smiles={ex.smiles!} startAt={5} />
             </div>
           )}
@@ -559,12 +545,12 @@ function Feedback({
       <div className="mt-4 flex flex-wrap gap-2">
         {onRetry && done && (
           <Button variant="soft" onClick={onRetry}>
-            ↺ Réessayer (sans pénalité)
+            Réessayer (sans pénalité)
           </Button>
         )}
         {onSimilar && done && (
           <Button variant="outline" onClick={onSimilar}>
-            Un exercice similaire
+            Nouvel exercice ciblé sur cette règle
           </Button>
         )}
         {onNext && (

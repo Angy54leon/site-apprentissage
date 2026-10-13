@@ -67,12 +67,12 @@ export function BarChart({ data, max, height = 140, format = (v: number) => Stri
 
 export function HBar({ label, value, sub }: { label: string; value: number | null; sub?: string }) {
   return (
-    <div className="grid grid-cols-[8rem_1fr_3.5rem] items-center gap-2 text-sm">
-      <span className="font-semibold truncate" title={label}>
+    <div className="grid grid-cols-[1fr_3rem] sm:grid-cols-[minmax(0,15rem)_1fr_3.5rem] items-center gap-x-3 gap-y-1 text-sm">
+      <span className="col-span-2 sm:col-span-1 font-medium sm:truncate" title={label}>
         {label}
       </span>
-      <div className="h-3 rounded-full bg-surface-2 border border-line overflow-hidden" role="img" aria-label={`${label} : ${value === null ? 'pas de données' : Math.round(value * 100) + ' %'}`}>
-        {value !== null && <div className="h-full rounded-full bg-brand-2" style={{ width: `${value * 100}%` }} />}
+      <div className="h-2.5 rounded-full bg-surface-2 overflow-hidden" role="img" aria-label={`${label} : ${value === null ? 'pas de données' : Math.round(value * 100) + ' %'}`}>
+        {value !== null && <div className="h-full rounded-full bg-brand" style={{ width: `${value * 100}%` }} />}
       </div>
       <span className="text-right tabular-nums text-ink-2" title={sub}>
         {value === null ? '—' : `${Math.round(value * 100)} %`}

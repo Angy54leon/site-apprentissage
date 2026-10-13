@@ -1,6 +1,6 @@
 import { useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { LOVE } from '../config/love';
+import { APP } from '../config/app';
 import { MODULES, SKILLS } from '../content/skills';
 import { buildExercise } from '../exercises/generate';
 import type { Exercise, ExerciseSpec } from '../exercises/types';
@@ -9,7 +9,7 @@ import { WEEKDAY_LABELS, today } from '../state/dates';
 import type { Profile } from '../state/types';
 import { ExerciseRunner, type RunResult } from '../ui/exercises/ExerciseRunner';
 import { Button, Card, cx } from '../ui/kit';
-import { Mimi, burst } from '../ui/love';
+import { Icon, Logo } from '../ui/icons';
 
 /** Test de positionnement : quelques questions vérifiées par module. */
 const PLACEMENT: { module: string; spec: ExerciseSpec }[] = [
@@ -51,7 +51,6 @@ export function OnboardingPage() {
   const finish = (acquired: string[]) => {
     const difficult = SKILLS.filter((s) => difficultModules.includes(s.module)).map((s) => s.id);
     completeOnboarding({ ...profile, difficultSkills: difficult }, acquired);
-    burst('hearts');
     nav('/tableau-de-bord');
   };
 
@@ -88,20 +87,19 @@ export function OnboardingPage() {
 
   if (placement) {
     return (
-      <div className="min-h-screen love-bg px-4 py-8">
+      <div className="min-h-screen bg-bg px-4 py-8">
         {!placementResult ? (
           <ExerciseRunner
             exercises={placement}
             context="placement"
             mode="exam"
-            title="Test de positionnement — réponds sans stress, c’est juste pour adapter ton parcours 💗"
+            title="Test de positionnement — il sert uniquement à adapter ton parcours (non comptabilisé dans les statistiques)"
             onFinish={onPlacementDone}
             renderSummary={() => null}
           />
         ) : (
           <Card className="max-w-xl mx-auto text-center">
-            <Mimi size={90} mood="cheer" className="mx-auto" />
-            <h1 className="text-2xl font-extrabold mt-2">Résultat du test</h1>
+            <h1 className="text-2xl font-semibold mt-2">Résultat du test</h1>
             <ul className="text-left my-4 space-y-1">
               {MODULES.filter((m) => placementResult.scores[m.id]).map((m) => {
                 const [ok, n] = placementResult.scores[m.id];
@@ -118,9 +116,9 @@ export function OnboardingPage() {
             <p className="text-ink-2 mb-4">
               {placementResult.acquired.length
                 ? `Les leçons des modules acquis sont marquées comme vues : elles reviendront en révision pour vérifier que tout est solide. Tu peux toujours les rouvrir.`
-                : `On commence au début : c’est le meilleur choix pour construire des bases solides. 💗`}
+                : `On commence au début : c’est le meilleur moyen de construire des bases solides.`}
             </p>
-            <Button onClick={() => finish(placementResult.acquired)}>Découvrir mon tableau de bord 💗</Button>
+            <Button onClick={() => finish(placementResult.acquired)}>Accéder au tableau de bord</Button>
           </Card>
         )}
       </div>
@@ -128,20 +126,20 @@ export function OnboardingPage() {
   }
 
   return (
-    <div className="min-h-screen love-bg px-4 py-8">
+    <div className="min-h-screen bg-bg px-4 py-8">
       <div className="max-w-2xl mx-auto">
         <div className="flex items-center gap-3 mb-4">
-          <Mimi size={60} mood="happy" />
+          <Logo size={40} />
           <div>
-            <p className="font-hand text-2xl text-brand">Coucou {LOVE.firstName} !</p>
-            <p className="text-ink-2 text-sm">Quelques questions pour préparer ton programme. Tout est modifiable plus tard.</p>
+            <p className="text-lg font-semibold">Bienvenue sur {APP.name}</p>
+            <p className="text-ink-2 text-sm">Quelques questions pour construire ton programme de travail. Tout reste modifiable dans les réglages.</p>
           </div>
         </div>
         <div className="h-2 rounded-full bg-surface-2 mb-4 overflow-hidden">
           <div className="h-full bg-brand transition-all" style={{ width: `${progress * 100}%` }} />
         </div>
         <Card className="anim-fade">
-          <h1 className="text-xl font-extrabold mb-4">
+          <h1 className="text-xl font-semibold mb-4">
             {step + 1}. {stepTitle[step]}
           </h1>
           {step === 0 && (
@@ -238,12 +236,12 @@ export function OnboardingPage() {
           )}
           {step === 3 && (
             <div className="grid gap-3">
-              <button type="button" onClick={() => finish([])} className="text-left rounded-2xl border-2 border-line hover:border-brand-2 bg-surface p-4">
-                <div className="font-extrabold text-lg">🌱 Commencer directement au début</div>
+              <button type="button" onClick={() => finish([])} className="text-left rounded-lg border border-line hover:border-brand-2 bg-surface p-4">
+                <div className="font-semibold text-lg flex items-center gap-2"><Icon name="play" /> Commencer directement au début</div>
                 <p className="text-ink-2 text-sm">Idéal si tu débutes : on pose les bases une par une, tranquillement.</p>
               </button>
-              <button type="button" onClick={startPlacement} className="text-left rounded-2xl border-2 border-line hover:border-brand-2 bg-surface p-4">
-                <div className="font-extrabold text-lg">🧪 Faire un petit test de positionnement (≈ 8 min)</div>
+              <button type="button" onClick={startPlacement} className="text-left rounded-lg border border-line hover:border-brand-2 bg-surface p-4">
+                <div className="font-semibold text-lg flex items-center gap-2"><Icon name="target" /> Faire un test de positionnement (≈ 8 min)</div>
                 <p className="text-ink-2 text-sm">12 questions pour repérer ce que tu sais déjà. Les modules réussis seront marqués comme vus, et vérifiés en révision.</p>
               </button>
             </div>
@@ -270,10 +268,12 @@ export function Chip({ on, onClick, children, block }: { on: boolean; onClick: (
       type="button"
       onClick={onClick}
       aria-pressed={on}
-      className={cx('rounded-2xl border-2 px-3 py-2 font-semibold transition text-left', block && 'w-full', on ? 'border-brand bg-brand-soft/40' : 'border-line bg-surface hover:border-brand-2')}
+      className={cx('rounded-lg border px-3 py-2 font-semibold transition text-left', block && 'w-full', on ? 'border-brand bg-brand-soft' : 'border-line bg-surface hover:border-ink-3')}
     >
-      {on ? '💗 ' : ''}
-      {children}
+      <span className="inline-flex items-center gap-2">
+        {on && <Icon name="check" size={15} className="text-brand" />}
+        {children}
+      </span>
     </button>
   );
 }
@@ -286,7 +286,7 @@ export function GoalEditor({ goal, onChange }: { goal: Profile['goal']; onChange
         <button type="button" className="w-8 h-8 rounded-lg border border-line bg-surface font-bold" onClick={() => onChange({ ...goal, [key]: Math.max(0, goal[key] - 5) })} aria-label={`Moins de ${label}`}>
           −
         </button>
-        <span className="w-14 text-center font-extrabold tabular-nums">{goal[key]} min</span>
+        <span className="w-14 text-center font-semibold tabular-nums">{goal[key]} min</span>
         <button type="button" className="w-8 h-8 rounded-lg border border-line bg-surface font-bold" onClick={() => onChange({ ...goal, [key]: Math.min(90, goal[key] + 5) })} aria-label={`Plus de ${label}`}>
           +
         </button>
@@ -295,9 +295,9 @@ export function GoalEditor({ goal, onChange }: { goal: Profile['goal']; onChange
   );
   return (
     <div className="grid gap-2">
-      {row('lessonMin', '📖 Cours')}
-      {row('exerciseMin', '✏️ Exercices')}
-      {row('reviewMin', '🔁 Révision')}
+      {row('lessonMin', 'Cours')}
+      {row('exerciseMin', 'Exercices')}
+      {row('reviewMin', 'Révisions')}
     </div>
   );
 }

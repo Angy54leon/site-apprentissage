@@ -1,13 +1,13 @@
-# Julie’s Chemistry Love 💗
+# Nomenclature organique
 
-> *Un peu de chimie, beaucoup d’amour.*
+Plateforme web pour apprendre la **nomenclature IUPAC en chimie organique**, des bases absolues jusqu’au niveau examen.
 
-Une application web pour apprendre la **nomenclature en chimie organique** depuis zéro jusqu’au niveau examen, enveloppée dans un petit univers romantique créé pour Julie.
-
-- 38 leçons en 7 modules (bases → alcanes → alcènes/alcynes → cycles → fonctions → molécules complexes → examens), chacune en 8 étapes : comprendre, règle à retenir, exemple résolu pas à pas, pièges et exemples, exercices guidés (avec indices), exercices autonomes, mini-test de validation, résumé.
-- 16 types d’exercices, corrigés automatiquement avec une correction **chimique** (voir plus bas).
-- Révisions espacées (Leitner), planning recalculé, carnet d’erreurs, examens blancs chronométrés avec barème, statistiques réelles.
-- Mimi (l’atome rose), lettre d’accueil dans une enveloppe, boîte à mots doux, lettre secrète, calendrier des petits mots, badges, autocollants, thèmes pastel, mode concentration, mode sombre doux, animations désactivables.
+- **Parcours de 12 chapitres** progressifs (structure des atomes → valence → formules → topologique → chaînes → alcanes → alkyles et numérotation → alcènes/alcynes → cycles → fonctions → molécules polyfonctionnelles → synthèse et examens), avec niveau de difficulté, prérequis conseillés, objectifs et compétences travaillées. Aucun contenu n’est verrouillé.
+- **38 leçons** en 8 étapes : explications, règle à retenir, exemple résolu pas à pas, erreurs fréquentes, exercices guidés (avec indices), exercices autonomes, quiz final, fiche récapitulative.
+- **16 types d’exercices**, corrigés avec une vérification **chimique** (voir plus bas) : après chaque réponse, le raisonnement pas à pas, la règle non respectée et un nouvel exercice ciblé sur cette règle.
+- **Révisions** espacées (Leitner) avec priorités du jour justifiées, planning quotidien et hebdomadaire adapté à la date d’examen, suivi des compétences.
+- **Examens blancs** chronométrés avec barème, **carnet d’erreurs**, **statistiques** et indicateur de préparation calculés uniquement à partir des résultats réels, **glossaire**, analyseur de molécules.
+- Interface sobre (bleu marine, bleu scientifique, gris clair), barre latérale compacte sur ordinateur, navigation adaptée au mobile, **mode concentration** pour les exercices, thème sombre.
 
 ## Installer et lancer
 
@@ -41,24 +41,29 @@ Les tests vérifient notamment :
 - la stéréochimie (Z/E à partir du SMILES et du dessin, R/S sur des cas de référence) ;
 - chaque exercice généré est bien jugé correct avec la bonne réponse, les distracteurs sont des molécules différentes et valides ;
 - le contenu des leçons (toutes les références existent, tous les exemples sont nommables) ;
-- la répétition espacée, le planning, la sauvegarde/restauration, les badges et la lettre secrète.
+- la répétition espacée, le planning, la sauvegarde/restauration et la reprise des anciennes sauvegardes ;
+- l’organisation du parcours (chaque leçon appartient à exactement un chapitre, les prérequis existent).
 
-## Personnaliser le petit univers
-
-Tout le romantique est centralisé dans **`src/config/love.ts`**, séparé du contenu scientifique :
+## Personnaliser
 
 | Quoi | Où |
 |---|---|
-| Prénom, nom du site, sous-titre, dédicace | `LOVE` |
-| Textes de la page d’accueil | `HOME` |
-| Lettre d’accueil / lettre secrète | `WELCOME_LETTER`, `SECRET_LETTER` |
-| Messages (bonne réponse, erreur, fin de séance, chapitre validé, boîte à mots doux, calendrier, régularité, conseils de Mimi…) | `MESSAGES` |
-| Couleurs et thèmes pastel débloquables | `COLORS`, `THEMES` |
-| Conditions de déblocage (lettre secrète après 5 séances, paliers de Mimi, probabilité du « Bravo mon cœur », jalons de régularité) | `UNLOCK` |
-| Badges et autocollants | `BADGES`, `STICKERS` |
-| Animations par défaut | `ANIMATION_DEFAULTS` |
+| Nom du site, sous-titre, conseils de méthode | `src/config/app.ts` |
+| Couleurs, rayons, typographie (variables de design, thème clair et sombre) | `src/index.css` (bloc `:root` / `.dark`, exposé à Tailwind via `@theme inline`) |
+| Chapitres du parcours (ordre, difficulté, prérequis, objectifs) | `src/content/chapters.ts` |
+| Leçons, molécules, questions, glossaire | `src/content/` |
 
-Les lettres et des mots doux supplémentaires peuvent aussi être modifiés **dans le site** (menu *Personnaliser*), sans toucher au code.
+## Sauvegarde des données
+
+La progression est enregistrée dans le navigateur sous la clé `nomenclature-organique:v1`. Les sauvegardes de l’ancienne version du site (clé `julies-chemistry-love:v1`) sont reprises automatiquement au premier chargement : leçons validées, exercices, révisions, erreurs, examens et objectifs sont conservés ; seuls les anciens éléments décoratifs sont ignorés. Les fichiers exportés avec l’ancienne version restent importables.
+
+## Publier sur Vercel
+
+Le dépôt est prêt pour Vercel (`vercel.json` : préréglage Vite, `npm run build`, dossier `dist`). Les URL en `#` évitent toute règle de réécriture côté serveur, et aucune variable d’environnement n’est nécessaire.
+
+1. Pousser la branche sur GitHub (Vercel crée automatiquement un déploiement de prévisualisation pour chaque branche poussée).
+2. Vérifier l’URL de prévisualisation affichée par Vercel (onglet *Deployments* du projet).
+3. Fusionner la branche dans la branche de production du projet (souvent `main`) : Vercel redéploie automatiquement la version de production.
 
 ## Architecture
 
@@ -76,12 +81,14 @@ src/
       grading.ts              correction des noms et des formules brutes
   content/                  contenu pédagogique (leçons, banque de molécules, questions, glossaire)
   exercises/                génération et correction des exercices, séries (révisions, examens…)
-  state/                    sauvegarde (Repository), Leitner, planning, statistiques, récompenses
-  config/love.ts            tout l’univers romantique
+  content/chapters.ts       les 12 chapitres du parcours
+  state/                    sauvegarde (Repository), Leitner, planning, statistiques
+  config/app.ts             nom du site, textes généraux
+  index.css                 variables de design centralisées (couleurs, thème sombre)
   ui/, pages/               composants React et pages
 ```
 
-Choix techniques : **React + TypeScript + Vite + Tailwind CSS**, tests **Vitest**, polices embarquées (Nunito, Caveat) pour fonctionner hors ligne. Le stockage passe par une interface `Repository` (`src/state/storage.ts`) : on pourra ajouter un compte et une base de données sans toucher au reste.
+Choix techniques : **React + TypeScript + Vite + Tailwind CSS**, tests **Vitest**, police embarquée (Inter) pour fonctionner hors ligne. Le stockage passe par une interface `Repository` (`src/state/storage.ts`) : on pourra ajouter un compte et une base de données sans toucher au reste.
 
 **Pourquoi un moteur de dessin maison plutôt que SmilesDrawer ou RDKit ?** Les exercices ont besoin de numéroter les carbones selon la numérotation IUPAC, de surligner la chaîne principale choisie par les règles, de colorer chaque substituant, de rendre les atomes cliquables et d’afficher des formules semi-développées et développées. Ces informations viennent du moteur de nomenclature : un rendu maison en SVG, piloté par la même structure, garantit que le dessin correspond exactement à la molécule de l’exercice, sans dépendance lourde (RDKit pèse plusieurs Mo).
 

@@ -6,12 +6,15 @@ import { M4 } from './m4';
 import { M5 } from './m5';
 import { M6 } from './m6';
 import type { Lesson } from './types';
+import { CHAPTERS } from '../chapters';
 
 export type { Lesson, Block, ShowOption, WorkedStep } from './types';
 
-/** Toutes les leçons, dans l'ordre du parcours. */
-export const LESSONS: Lesson[] = [...M0, ...M1, ...M2, ...M3, ...M4, ...M5, ...M6];
-export const LESSON_BY_ID: Record<string, Lesson> = Object.fromEntries(LESSONS.map((l) => [l.id, l]));
+const ALL: Lesson[] = [...M0, ...M1, ...M2, ...M3, ...M4, ...M5, ...M6];
+export const LESSON_BY_ID: Record<string, Lesson> = Object.fromEntries(ALL.map((l) => [l.id, l]));
+
+/** Toutes les leçons, dans l'ordre du parcours (chapitres 1 à 12). */
+export const LESSONS: Lesson[] = CHAPTERS.flatMap((c) => c.lessons.map((id) => LESSON_BY_ID[id]));
 
 export function lessonsOfModule(module: string): Lesson[] {
   return LESSONS.filter((l) => l.module === module);

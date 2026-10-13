@@ -1,5 +1,6 @@
-// Statistiques calculées uniquement à partir des données réelles de Julie.
-import { LESSONS, lessonsOfModule } from '../content/lessons';
+// Statistiques calculées uniquement à partir des données réelles de l'utilisateur.
+import { LESSONS, LESSON_BY_ID, lessonsOfModule } from '../content/lessons';
+import { CHAPTERS, type Chapter, chapterOfLesson } from '../content/chapters';
 import { MODULES, SKILLS, SKILL_BY_ID } from '../content/skills';
 import type { ErrorCode } from '../chem/nomenclature/grading';
 import type { AppState, Attempt } from './types';
@@ -75,18 +76,52 @@ export function currentModule(state: AppState) {
   return MODULES.find((m) => m.id === (next?.module ?? 'm6'))!;
 }
 
+export function chapterProgress(state: AppState, c: Chapter): { done: number; total: number } {
+  return { done: c.lessons.filter((id) => state.lessons[id]?.status === 'completed').length, total: c.lessons.length };
+}
+
+export function chapterCompleted(state: AppState, c: Chapter): boolean {
+  return c.lessons.filter((id) => !LESSON_BY_ID[id].advanced).every((id) => state.lessons[id]?.status === 'completed');
+}
+
+/** Chapitre en cours : celui de la prochaine leçon recommandée. */
+export function currentChapter(state: AppState): Chapter {
+  const next = nextRecommendedLesson(state);
+  return (next && chapterOfLesson(next.id)) ?? CHAPTERS[CHAPTERS.length - 1];
+}
+
+/** Notions travaillées dans un chapitre. */
+export function chapterSkills(c: Chapter): string[] {
+  return [...new Set(c.lessons.flatMap((id) => LESSON_BY_ID[id].skills))];
+}
+
+/** Taux de réussite par chapitre (premiers essais sur les notions du chapitre). */
+export function chapterRates(state: AppState): { chapter: Chapter; rate: number | null; attempts: number }[] {
+  const first = firstAttempts(state);
+  return CHAPTERS.map((c) => {
+    const skills = new Set(chapterSkills(c));
+    const list = first.filter((a) => a.skills.some((s) => skills.has(s)));
+    return { chapter: c, rate: rate(list), attempts: list.length };
+  });
+}
+
+/** Leçon commencée mais pas encore validée (pour « Reprendre mon apprentissage »). */
+export function lessonInProgress(state: AppState) {
+  return LESSONS.find((l) => state.lessons[l.id]?.status === 'in-progress');
+}
+
 export function nextRecommendedLesson(state: AppState) {
   return LESSONS.find((l) => state.lessons[l.id]?.status !== 'completed');
 }
 
 export function levelLabel(state: AppState): string {
   const n = completedLessons(state);
-  if (n === 0) return 'Grande débutante (et c’est parfait pour commencer)';
-  if (n < 6) return 'Apprentie chimiste';
-  if (n < 13) return 'Chimiste en herbe';
-  if (n < 22) return 'Chimiste confirmée';
-  if (n < LESSONS.length) return 'Presque experte';
-  return 'Experte de la nomenclature';
+  if (n === 0) return 'Niveau : découverte';
+  if (n < 6) return 'Niveau : bases';
+  if (n < 13) return 'Niveau : débutant';
+  if (n < 22) return 'Niveau : intermédiaire';
+  if (n < LESSONS.length) return 'Niveau : avancé';
+  return 'Niveau : examen';
 }
 
 export function moduleRates(state: AppState): { module: string; label: string; rate: number | null; attempts: number }[] {

@@ -4,8 +4,16 @@ import { GLOSSARY } from './glossary';
 import { ERROR_INFO } from '../chem/nomenclature/grading';
 import { buildExercise, analyse } from '../exercises/generate';
 import { SKILL_BY_ID } from './skills';
+import { CHAPTERS } from './chapters';
 
 describe('contenu des leçons', () => {
+  test('chaque leçon appartient à exactement un chapitre', () => {
+    const ids = CHAPTERS.flatMap((c) => c.lessons);
+    expect(new Set(ids).size).toBe(ids.length);
+    expect(ids.length).toBe(LESSONS.length);
+    for (const l of LESSONS) expect(l, 'leçon manquante').toBeDefined();
+    for (const c of CHAPTERS) for (const p of c.prerequisites) expect(CHAPTERS.some((x) => x.id === p)).toBe(true);
+  });
   test('identifiants uniques', () => {
     expect(new Set(LESSONS.map((l) => l.id)).size).toBe(LESSONS.length);
   });

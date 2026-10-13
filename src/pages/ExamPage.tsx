@@ -9,7 +9,6 @@ import { MoleculeView } from '../ui/MoleculeView';
 import { MoleculeExplorer } from '../ui/MoleculeCard';
 import { analyse } from '../exercises/generate';
 import { Button, Card, Empty, PageTitle, Pill, cx } from '../ui/kit';
-import { LoveNote, burst } from '../ui/love';
 
 const COUNT = 20;
 const SECONDS = 30 * 60;
@@ -20,9 +19,9 @@ function CorrectionItem({ r, i }: { r: RunResult; i: number }) {
   const got = r.res.status === 'correct' ? pts : r.res.status === 'partial' ? pts / 2 : 0;
   const named = r.ex.smiles ? analyse(r.ex.smiles).naming : null;
   return (
-    <li className="rounded-2xl border border-line bg-surface p-3">
+    <li className="rounded-lg border border-line bg-surface p-3">
       <button type="button" className="w-full flex items-start gap-2 text-left" onClick={() => setOpen(!open)} aria-expanded={open}>
-        <span className={cx('font-black', r.res.status === 'correct' ? 'text-ok' : r.res.status === 'partial' ? 'text-warn' : 'text-bad')}>
+        <span className={cx('font-bold', r.res.status === 'correct' ? 'text-ok' : r.res.status === 'partial' ? 'text-warn' : 'text-bad')}>
           {r.res.status === 'correct' ? '✓' : r.res.status === 'partial' ? '≈' : '✗'}
         </span>
         <span className="flex-1">
@@ -91,7 +90,6 @@ export function ExamPage() {
     const score = Math.round((got / max) * 20 * 2) / 2;
     recordExam({ id: String(Date.now()), date: today(), score, max: 20, durationMs: Date.now() - started, perSkill });
     setDone({ results, score });
-    if (score >= 12) burst('confetti');
   };
 
   if (target)
@@ -107,7 +105,7 @@ export function ExamPage() {
   if (exam && !done)
     return (
       <div>
-        <p className="mb-3 text-sm text-ink-2">Pas de correction pendant l’examen : elle arrive à la fin, question par question. Respire, tu as le temps. 💗</p>
+        <p className="mb-3 text-sm text-ink-2">Conditions d’examen : pas d’indice ni de correction pendant l’épreuve. La correction détaillée de chaque question est affichée à la fin.</p>
         <ExerciseRunner exercises={exam} context="exam" mode="exam" noHints totalSeconds={SECONDS} title="Examen blanc" onFinish={finish} renderSummary={() => null} />
       </div>
     );
@@ -120,11 +118,9 @@ export function ExamPage() {
     return (
       <div className="max-w-3xl">
         <Card className="text-center mb-4">
-          <h1 className="text-2xl font-extrabold">Résultat de l’examen blanc</h1>
-          <p className="text-5xl font-black text-brand my-3">{done.score}/20</p>
-          <LoveNote>
-            {done.score >= 16 ? 'Mention très bien, Julie ! Je suis tellement fier de toi.' : done.score >= 10 ? 'Bravo, c’est une belle base ! Regarde la correction pour aller encore plus loin.' : 'C’est un entraînement : chaque erreur vue maintenant est un point gagné le jour J. On reprend ensemble.'}
-          </LoveNote>
+          <h1 className="text-2xl font-semibold">Résultat de l’examen blanc</h1>
+          <p className="text-5xl font-bold text-brand my-3">{done.score}/20</p>
+          <p className="text-ink-2">{done.score >= 16 ? 'Très bon résultat : les notions du programme sont solides. Concentre-toi sur les rares erreurs restantes.' : done.score >= 10 ? 'Résultat correct. Analyse la correction des questions manquées et retravaille les notions signalées.' : 'Des notions restent à consolider. Utilise la révision ciblée ci-dessous, puis repasse un examen blanc dans quelques jours.'}</p>
           {weak.length > 0 && (
             <div className="mt-3">
               <p className="text-sm font-bold">Notions à retravailler :</p>
@@ -141,7 +137,7 @@ export function ExamPage() {
             </div>
           )}
         </Card>
-        <h2 className="font-extrabold mb-2">Correction détaillée (clique sur une question)</h2>
+        <h2 className="font-semibold mb-2">Correction détaillée (clique sur une question)</h2>
         <ul className="space-y-2">
           {(exam ?? []).map((ex, i) => {
             const r = done.results.find((x) => x.ex.uid === ex.uid) ?? { ex, res: { status: 'incorrect' as const, userAnswer: '', expected: '(temps écoulé)', errorCodes: [], details: [], headline: '' } };
@@ -160,12 +156,12 @@ export function ExamPage() {
 
   return (
     <div>
-      <PageTitle emoji="📝" sub="Conditions d’examen : questions mélangées de tout le programme vu, sans indice, chronométrées, avec un barème.">
+      <PageTitle sub="Conditions d’examen : questions mélangées de tout le programme vu, sans indice, chronométrées, avec un barème.">
         Examens blancs
       </PageTitle>
       <div className="grid gap-4 md:grid-cols-[1.2fr_1fr]">
         <Card>
-          <h2 className="font-extrabold">Format</h2>
+          <h2 className="font-semibold">Format</h2>
           <ul className="list-disc pl-5 text-ink-2 mt-2 space-y-1">
             <li>{COUNT} questions (60 % de noms de molécules, le reste varié : structures, fonctions, erreurs, numérotation…).</li>
             <li>Durée : 30 minutes. Les questions non traitées comptent 0.</li>
@@ -177,7 +173,7 @@ export function ExamPage() {
           </Button>
         </Card>
         <Card>
-          <h2 className="font-extrabold mb-2">Mes examens</h2>
+          <h2 className="font-semibold mb-2">Mes examens</h2>
           {st.exams.length ? (
             <ul className="space-y-1">
               {[...st.exams].reverse().map((e) => (

@@ -10,7 +10,7 @@ import { formatDate } from '../state/dates';
 import { ExerciseRunner, RunSummary } from '../ui/exercises/ExerciseRunner';
 import { MoleculeView } from '../ui/MoleculeView';
 import { Button, Card, Empty, PageTitle, Pill, Rich, cx } from '../ui/kit';
-import { MimiSays } from '../ui/love';
+import { Callout } from '../ui/kit';
 import { Link } from 'react-router-dom';
 
 export function MistakesPage() {
@@ -47,13 +47,13 @@ export function MistakesPage() {
 
   return (
     <div>
-      <PageTitle emoji="📒" sub="Chaque erreur est gardée ici avec la règle à revoir. Elle disparaît des erreurs à revoir quand tu la réussis deux fois.">
+      <PageTitle sub="Chaque erreur est gardée ici avec la règle à revoir. Elle disparaît des erreurs à revoir quand tu la réussis deux fois.">
         Carnet d’erreurs
       </PageTitle>
       <div className="grid gap-4 lg:grid-cols-[1fr_2fr]">
         <div className="space-y-4">
           <Card>
-            <p className="text-4xl font-black text-brand">{openCount}</p>
+            <p className="text-4xl font-bold text-brand">{openCount}</p>
             <p className="text-ink-2 text-sm">erreur{openCount > 1 ? 's' : ''} à revoir</p>
             <Button className="mt-3 w-full" onClick={() => setRun(buildMistakesSet(getState(), 10))}>
               Réviser mes erreurs
@@ -61,7 +61,7 @@ export function MistakesPage() {
             <p className="text-xs text-ink-3 mt-2">Chaque exercice raté revient, suivi d’un exercice similaire pour vérifier que la règle est comprise.</p>
           </Card>
           <Card>
-            <h2 className="font-extrabold mb-2">Erreurs récurrentes</h2>
+            <h2 className="font-semibold mb-2">Erreurs récurrentes</h2>
             {recurring.length ? (
               <ul className="space-y-2 text-sm">
                 {recurring.map((r) => (
@@ -80,7 +80,7 @@ export function MistakesPage() {
               <p className="text-sm text-ink-2">Rien pour l’instant.</p>
             )}
           </Card>
-          <MimiSays>Une erreur, ce n’est pas un échec : c’est une molécule de plus à comprendre. 💗</MimiSays>
+          <Callout kind="method" title="Comment utiliser le carnet">Lis la règle associée à chaque erreur, refais l’exercice, puis un exercice ciblé. Une erreur est marquée comme comprise après deux réussites.</Callout>
         </div>
         <div>
           <div className="flex gap-1.5 mb-3">
@@ -96,7 +96,7 @@ export function MistakesPage() {
               </button>
             ))}
           </div>
-          {!entries.length && <Empty>{filter === 'open' ? 'Aucune erreur à revoir. ✨' : 'Rien ici pour le moment.'}</Empty>}
+          {!entries.length && <Empty>{filter === 'open' ? 'Aucune erreur à revoir.' : 'Rien ici pour le moment.'}</Empty>}
           <ul className="space-y-3">
             {entries.map((m) => {
               const skill = SKILL_BY_ID[m.skills[0]];

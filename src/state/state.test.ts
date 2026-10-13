@@ -1,10 +1,9 @@
 import { setToday, addDays } from './dates';
-import { MemoryRepository, exportState, importState, defaultState } from './storage';
+import { MemoryRepository, LocalStorageRepository, exportState, importState, defaultState } from './storage';
 import * as store from './store';
 import { applyReview, introduceSkill, dueSkills } from './srs';
 import { buildPlan, todaysTasks } from './planner';
 import { skillStats, readiness } from './stats';
-import { drawMessage, earnedBadges, secretLetterUnlocked } from './rewards';
 import { buildExercise } from '../exercises/generate';
 import { gradeExercise } from '../exercises/grade';
 import { LESSONS } from '../content/lessons';
@@ -58,7 +57,6 @@ describe('maîtrise et carnet d’erreurs', () => {
     expect(store.getState().mistakes[ex.key].resolved).toBe(false);
     store.recordAttempt(ex, gradeExercise(ex, { text: '2-méthylbutane' }), { context: 'mistakes' });
     expect(store.getState().mistakes[ex.key].resolved).toBe(true);
-    expect(store.getState().love.badges['erreur-vaincue']).toBeDefined();
   });
 });
 
@@ -68,7 +66,6 @@ describe('leçons et planning', () => {
     const st = store.getState();
     expect(st.lessons['m1-racines'].status).toBe('completed');
     expect(st.skills['alc-racines'].due).toBe('2026-10-13');
-    expect(earnedBadges(st)).toContain('premiere-lecon');
   });
   test('quiz raté : leçon non validée', () => {
     store.recordLessonQuiz('m1-racines', 0.5);
@@ -91,16 +88,15 @@ describe('leçons et planning', () => {
     const st = store.getState();
     expect(st.days['2026-10-12'].sessionDone).toBe(true);
     expect(st.sessionsCompleted).toBe(1);
-    expect(st.love.pending.some((p) => p.type === 'session')).toBe(true);
   });
-  test('lettre secrète après 5 séances', () => {
+  test('une séance comptée par jour', () => {
     for (let i = 0; i < 5; i++) {
       setToday(addDays('2026-10-12', i));
       const tasks = todaysTasks(store.getState());
       store.snapshotTodayPlan(tasks.length ? tasks : [{ id: 'x' + i, kind: 'practice', title: 'x', minutes: 1 }]);
       for (const t of store.getState().days[addDays('2026-10-12', i)].plan!) store.markTaskDone(t.id);
     }
-    expect(secretLetterUnlocked(store.getState())).toBe(true);
+    expect(store.getState().sessionsCompleted).toBe(5);
   });
   test('indicateur de préparation à 0 sans activité', () => {
     expect(readiness(store.getState()).value).toBe(0);
@@ -120,18 +116,18 @@ describe('sauvegarde et messages', () => {
     expect(() => importState('{"foo": 1}')).toThrow();
     expect(importState(exportState(defaultState())).version).toBe(1);
   });
-  test('pas de répétition immédiate des messages', () => {
-    const st = defaultState();
-    const seen: string[] = [];
-    for (let i = 0; i < 6; i++) seen.push(drawMessage(st, 'correct'));
-    for (let i = 1; i < seen.length; i++) expect(seen[i]).not.toBe(seen[i - 1]);
-  });
-  test('calendrier : un mot par jour', () => {
-    expect(store.getState().love.calendar.length).toBe(1);
-    store.initStore();
-    expect(store.getState().love.calendar.length).toBe(1);
-    setToday('2026-10-13');
-    store.initStore();
-    expect(store.getState().love.calendar.length).toBe(2);
-  });
+  test('reprise d’une ancienne sauvegarde (ancienne clé, champs décoratifs ignorés)', () => {
+    const mem = new Map<string, string>();
+    (globalThis as unknown as { localStorage: Storage }).localStorage = {
+      getItem: (k: string) => mem.get(k) ?? null,
+      setItem: (k: string, v: string) => void mem.set(k, v),
+      removeItem: (k: string) => void mem.delete(k),
+    } as Storage;
+    const old = { ...defaultState(), love: { badges: { x: '2026-01-01' } }, prefs: { animations: true, theme: 'rose', dark: true }, lessons: { 'm1-racines': { status: 'completed', step: 7 } } };
+    mem.set('julies-chemistry-love:v1', JSON.stringify(old));
+    const loaded = new LocalStorageRepository().load()!;
+    expect(loaded.lessons['m1-racines'].status).toBe('completed');
+    expect('love' in loaded).toBe(false);
+    expect(loaded.prefs).toEqual({ focusMode: false, dark: true });
+});
 });

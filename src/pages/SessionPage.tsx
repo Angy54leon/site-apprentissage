@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { LESSON_BY_ID } from '../content/lessons';
 import { SKILL_BY_ID } from '../content/skills';
@@ -10,8 +10,7 @@ import { formatDate, today } from '../state/dates';
 import type { PlanTaskSnapshot } from '../state/types';
 import { ExerciseRunner, RunSummary, type RunResult } from '../ui/exercises/ExerciseRunner';
 import { Button, Card, PageTitle, Pill, cx } from '../ui/kit';
-import { MimiSays, LoveNote } from '../ui/love';
-import { MESSAGES } from '../config/love';
+import { Callout } from '../ui/kit';
 
 export function SessionPage() {
   const st = useAppState();
@@ -25,7 +24,6 @@ export function SessionPage() {
   const done = log?.tasksDone ?? [];
   const [running, setRunning] = useState<{ task: PlanTaskSnapshot; exercises: Exercise[]; info?: string } | null>(null);
   const [finished, setFinished] = useState<{ task: PlanTaskSnapshot; results: RunResult[] } | null>(null);
-  const sessionMsg = useMemo(() => MESSAGES.sessionDone[Math.floor(Math.random() * MESSAGES.sessionDone.length)], []);
 
   const start = (task: PlanTaskSnapshot) => {
     const s = getState();
@@ -94,12 +92,12 @@ export function SessionPage() {
 
   return (
     <div className="max-w-3xl">
-      <PageTitle emoji="💕" sub={`${formatDate(t)}${isRestDay(st) ? ' · jour de repos prévu (séance facultative)' : ''}`}>
+      <PageTitle sub={`${formatDate(t)}${isRestDay(st) ? ' · jour de repos prévu (séance facultative)' : ''}`}>
         Ma séance du jour
       </PageTitle>
       {log?.sessionDone && (
         <Card className="mb-4 bg-ok-soft border-ok/30">
-          <LoveNote>{sessionMsg}</LoveNote>
+          <p className="font-medium text-ok">Séance du jour terminée. Les prochaines révisions sont planifiées automatiquement selon tes résultats.</p>
         </Card>
       )}
       <div className="space-y-3">
@@ -107,9 +105,9 @@ export function SessionPage() {
           const isDone = done.includes(task.id);
           return (
             <Card key={task.id} className={cx('flex flex-col sm:flex-row sm:items-center gap-3', isDone && 'opacity-80')}>
-              <div className={cx('w-10 h-10 shrink-0 rounded-2xl grid place-items-center text-lg font-black', isDone ? 'bg-ok text-white' : 'bg-surface-2')}>{isDone ? '✓' : i + 1}</div>
+              <div className={cx('w-10 h-10 shrink-0 rounded-lg grid place-items-center text-lg font-bold', isDone ? 'bg-ok text-white' : 'bg-surface-2')}>{isDone ? '✓' : i + 1}</div>
               <div className="flex-1">
-                <div className="font-extrabold">{task.title}</div>
+                <div className="font-semibold">{task.title}</div>
                 <div className="text-sm text-ink-2">
                   ~{task.minutes} min
                   {task.count ? ` · ${task.count} exercices` : ''}
@@ -138,9 +136,9 @@ export function SessionPage() {
           </Card>
         )}
       </div>
-      <MimiSays className="mt-6">
+      <div className="mt-6"><Callout kind="tip" title="Fonctionnement">
         La séance est terminée quand toutes les tâches sont cochées (ou quand tes trois durées d’objectif sont atteintes). Une leçon est cochée quand son mini-test est réussi.
-      </MimiSays>
+      </Callout></div>
       {tasks.some((t2) => t2.lessonId) && (
         <p className="text-xs text-ink-3 mt-3">Leçon du jour : {tasks.filter((x) => x.lessonId).map((x) => LESSON_BY_ID[x.lessonId!].title).join(', ')}.</p>
       )}

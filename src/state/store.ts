@@ -1,12 +1,10 @@
 // Magasin global (sans dépendance) + actions. Toute modification est sauvegardée.
 import { useSyncExternalStore } from 'react';
-import { MESSAGES, UNLOCK } from '../config/love';
 import { LESSONS, lessonsOfModule } from '../content/lessons';
 import type { Exercise, ExerciseResult } from '../exercises/types';
 import { addDays, diffDays, today } from './dates';
 import { applyMistake, applyReview, introduceSkill } from './srs';
 import { LocalStorageRepository, type Repository, defaultState, exportState, importState } from './storage';
-import { drawMessage, refreshRewards, type MessageContext } from './rewards';
 import type { AppState, AttemptContext, DayLog, ExamResult, PlanTaskSnapshot, Profile, Prefs } from './types';
 
 let repo: Repository = typeof localStorage !== 'undefined' ? new LocalStorageRepository() : (null as unknown as Repository);
@@ -36,10 +34,9 @@ export function getState(): AppState {
 }
 
 /** Applique une modification sur une copie de l'état, puis sauvegarde. */
-export function mutate(fn: (draft: AppState) => void, opts: { rewards?: boolean } = {}): void {
+export function mutate(fn: (draft: AppState) => void): void {
   const draft = structuredClone(state);
   fn(draft);
-  if (opts.rewards !== false) refreshRewards(draft, today());
   state = draft;
   persist();
   emit();
@@ -64,8 +61,8 @@ function dayLog(d: AppState, date = today()): DayLog {
 
 export interface VisitInfo {
   firstVisit: boolean;
+  /** Absence d'au moins 3 jours : on affiche un récapitulatif de reprise. */
   comeback: boolean;
-  newCalendarNote: boolean;
 }
 
 export function initStore(): VisitInfo {
@@ -73,19 +70,11 @@ export function initStore(): VisitInfo {
   state = loaded ?? defaultState();
   const t = today();
   const last = state.profile.lastVisitAt;
-  const info: VisitInfo = {
-    firstVisit: state.profile.visits === 0,
-    comeback: !!last && diffDays(t, last) >= 3,
-    newCalendarNote: false,
-  };
+  const info: VisitInfo = { firstVisit: state.profile.visits === 0, comeback: !!last && diffDays(t, last) >= 3 };
   const draft = structuredClone(state);
   if (draft.profile.lastVisitAt !== t) draft.profile.visits += 1;
   if (!draft.profile.firstVisitAt) draft.profile.firstVisitAt = t;
   draft.profile.lastVisitAt = t;
-  if (UNLOCK.calendarOneNotePerDay && !draft.love.calendar.some((c) => c.date === t)) {
-    draft.love.calendar.push({ date: t, index: draft.love.calendar.length % MESSAGES.calendar.length });
-    info.newCalendarNote = draft.love.calendar.length > 1;
-  }
   state = draft;
   persist(true);
   emit();
@@ -104,7 +93,7 @@ export function updateProfile(p: Partial<Profile>) {
 export function updatePrefs(p: Partial<Prefs>) {
   mutate((d) => {
     d.prefs = { ...d.prefs, ...p };
-  }, { rewards: false });
+  });
 }
 
 /** Fin de l'accueil : profil + éventuels modules déjà acquis (test de positionnement). */
@@ -135,7 +124,7 @@ export interface AttemptMeta {
 }
 
 export function recordAttempt(ex: Exercise, res: ExerciseResult, meta: AttemptMeta) {
-  // Le test de positionnement sert seulement à placer Julie dans le parcours :
+  // Le test de positionnement sert seulement à placer l'utilisateur dans le parcours :
   // il ne compte ni dans les statistiques ni dans le carnet d'erreurs.
   if (meta.context === 'placement') return;
   mutate((d) => {
@@ -235,7 +224,7 @@ export function setLessonStep(id: string, step: number) {
       return;
     }
     d.lessons[id] = { status: 'in-progress', step, quizBest: cur?.quizBest };
-  }, { rewards: false });
+  });
 }
 
 export const QUIZ_PASS = 0.7;
@@ -267,7 +256,7 @@ export function addActiveTime(kind: 'lesson' | 'exercise' | 'review', ms: number
     const t = today();
     dayLog(d, t).activeMs[kind] += ms;
     checkSession(d, t);
-  }, { rewards: false });
+  });
 }
 
 export function snapshotTodayPlan(tasks: PlanTaskSnapshot[]) {
@@ -278,7 +267,7 @@ export function snapshotTodayPlan(tasks: PlanTaskSnapshot[]) {
     log.plan = tasks;
     // tâches déjà faites (leçon validée plus tôt dans la journée)
     for (const task of tasks) if (task.lessonId && d.lessons[task.lessonId]?.status === 'completed' && d.lessons[task.lessonId]?.completedAt === t) log.tasksDone.push(task.id);
-  }, { rewards: false });
+  });
 }
 
 export function markTaskDone(taskId: string) {
@@ -302,7 +291,6 @@ function checkSession(d: AppState, t: string) {
   if (tasksOk || timeOk) {
     log.sessionDone = true;
     d.sessionsCompleted += 1;
-    d.love.pending.push({ type: 'session', id: t });
   }
 }
 
@@ -316,38 +304,6 @@ export function recordExam(r: ExamResult) {
     for (const task of log.plan ?? []) if (task.kind === 'exam' && !log.tasksDone.includes(task.id)) log.tasksDone.push(task.id);
     checkSession(d, r.date);
   });
-}
-
-// ---------------------------------------------------------------------------
-// Petit univers romantique
-
-export function pickMessage(ctx: MessageContext): string {
-  let msg = '';
-  mutate((d) => {
-    msg = drawMessage(d, ctx);
-  }, { rewards: false });
-  return msg;
-}
-
-export function consumePending() {
-  const first = state.love.pending[0];
-  if (!first) return null;
-  mutate((d) => {
-    d.love.pending.shift();
-  }, { rewards: false });
-  return first;
-}
-
-export function openSecretLetter() {
-  mutate((d) => {
-    d.love.secretLetterOpened = true;
-  }, { rewards: false });
-}
-
-export function setCustomLove(c: { letter?: string; secretLetter?: string; messages?: string[] }) {
-  mutate((d) => {
-    d.love.custom = { ...d.love.custom, ...c, messages: c.messages ?? d.love.custom.messages };
-  }, { rewards: false });
 }
 
 // ---------------------------------------------------------------------------

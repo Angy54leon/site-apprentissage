@@ -34,10 +34,7 @@ export function MoleculeCard(
   const allowModes = props.allowModes ?? true;
   const cyclic = useMemo(() => (props.smiles ? /\d/.test(props.smiles) : false), [props.smiles]);
   return (
-    <figure className={cx('rounded-2xl bg-surface border border-line p-3 relative', props.className)}>
-      <span className="decor absolute right-3 top-2 text-xs opacity-60" aria-hidden>
-        💗
-      </span>
+    <figure className={cx('rounded-lg bg-surface border border-line p-3 relative', props.className)}>
       {(allowModes || props.toggles) && (
         <div className="flex flex-wrap gap-2 items-center justify-between mb-2 pr-5">
           {allowModes && !cyclic && <ModeSwitch mode={mode} setMode={setMode} />}
@@ -57,7 +54,7 @@ export function MoleculeCard(
                   key={o}
                   onClick={() => toggle(o)}
                   aria-pressed={show.includes(o)}
-                  className={cx('rounded-lg px-2 py-1 border font-bold', show.includes(o) ? 'bg-brand-soft/60 border-brand-2 text-brand' : 'border-line text-ink-2')}
+                  className={cx('rounded-lg px-2 py-1 border font-bold', show.includes(o) ? 'bg-brand-soft border-brand-2 text-brand' : 'border-line text-ink-2')}
                 >
                   {l}
                 </button>
@@ -105,7 +102,7 @@ export function MoleculeExplorer({ smiles, startAt = 0, compact }: { smiles: str
   const cyclic = /\d/.test(smiles);
   return (
     <div className={cx('grid gap-3', compact ? '' : 'md:grid-cols-[1.1fr_1fr]')}>
-      <div className="rounded-2xl bg-surface border border-line p-3">
+      <div className="rounded-lg bg-surface border border-line p-3">
         {!cyclic && (
           <div className="mb-2">
             <ModeSwitch mode={mode} setMode={setMode} />
@@ -123,7 +120,7 @@ export function MoleculeExplorer({ smiles, startAt = 0, compact }: { smiles: str
                 onClick={() => setStep(i)}
                 className={cx(
                   'w-full text-left rounded-xl border px-3 py-2 transition',
-                  i === step ? 'border-brand-2 bg-brand-soft/30' : i < step ? 'border-line bg-surface' : 'border-dashed border-line text-ink-3',
+                  i === step ? 'border-brand-2 bg-brand-soft' : i < step ? 'border-line bg-surface' : 'border-dashed border-line text-ink-3',
                 )}
               >
                 <div className="font-bold text-sm">{s.title}</div>

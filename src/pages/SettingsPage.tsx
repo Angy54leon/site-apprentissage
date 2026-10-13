@@ -1,7 +1,6 @@
 import { useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { exportData, importData, resetAll, updatePrefs, updateProfile, useAppState } from '../state/store';
-import { unlockedThemes } from '../state/rewards';
 import { WEEKDAY_LABELS, today } from '../state/dates';
 import { Button, Card, Modal, PageTitle, cx } from '../ui/kit';
 import { Chip, GoalEditor } from './OnboardingPage';
@@ -19,7 +18,7 @@ export function SettingsPage() {
     a.download = `progression-chimie-${today()}.json`;
     a.click();
     URL.revokeObjectURL(url);
-    setMsg('Sauvegarde téléchargée. Garde-la précieusement 💗');
+    setMsg('Sauvegarde téléchargée.');
   };
   const onImport = async (f: File) => {
     try {
@@ -29,14 +28,14 @@ export function SettingsPage() {
       setMsg(`Import impossible : ${(e as Error).message}`);
     }
   };
-  const toggle = (on: boolean) => cx('rounded-2xl border-2 px-3 py-2 font-bold text-left', on ? 'border-brand bg-brand-soft/40' : 'border-line');
+  const toggle = (on: boolean) => cx('w-full rounded-lg border px-3 py-2 font-medium text-left', on ? 'border-brand bg-brand-soft' : 'border-line');
   return (
     <div className="max-w-4xl">
-      <PageTitle emoji="⚙️">Réglages</PageTitle>
-      {msg && <p className="mb-4 rounded-2xl bg-info-soft text-info px-4 py-3 font-semibold">{msg}</p>}
+      <PageTitle>Réglages</PageTitle>
+      {msg && <p className="mb-4 rounded-lg bg-info-soft text-info px-4 py-3 font-semibold">{msg}</p>}
       <div className="grid gap-4 md:grid-cols-2">
         <Card className="space-y-4">
-          <h2 className="font-extrabold">Mon programme</h2>
+          <h2 className="font-semibold">Mon programme</h2>
           <label className="block">
             <span className="font-bold">Date d’examen</span>
             <div className="flex gap-2 mt-1">
@@ -70,45 +69,29 @@ export function SettingsPage() {
           </Button>
         </Card>
         <Card className="space-y-3">
-          <h2 className="font-extrabold">Affichage</h2>
-          <button type="button" className={toggle(st.prefs.animations)} onClick={() => updatePrefs({ animations: !st.prefs.animations })} aria-pressed={st.prefs.animations}>
-            ✨ Animations {st.prefs.animations ? 'activées' : 'désactivées'}
-            <span className="block text-xs font-normal text-ink-2">Les animations sont aussi coupées si ton système demande de réduire les mouvements.</span>
-          </button>
+          <h2 className="font-semibold">Affichage</h2>
           <button type="button" className={toggle(st.prefs.focusMode)} onClick={() => updatePrefs({ focusMode: !st.prefs.focusMode })} aria-pressed={st.prefs.focusMode}>
-            🎧 Mode concentration {st.prefs.focusMode ? 'activé' : 'désactivé'}
-            <span className="block text-xs font-normal text-ink-2">Masque les décorations et les petits mots pendant le travail.</span>
+            Mode concentration {st.prefs.focusMode ? 'activé' : 'désactivé'}
+            <span className="block text-xs font-normal text-ink-2">Masque la navigation et ne garde que le contenu de travail.</span>
           </button>
           <button type="button" className={toggle(st.prefs.dark)} onClick={() => updatePrefs({ dark: !st.prefs.dark })} aria-pressed={st.prefs.dark}>
-            🌙 Mode sombre doux {st.prefs.dark ? 'activé' : 'désactivé'}
+            Thème sombre {st.prefs.dark ? 'activé' : 'désactivé'}
+            <span className="block text-xs font-normal text-ink-2">Contraste réduit pour les longues séances du soir.</span>
           </button>
-          <button type="button" className={toggle(st.prefs.showMimi)} onClick={() => updatePrefs({ showMimi: !st.prefs.showMimi })} aria-pressed={st.prefs.showMimi}>
-            ⚛️ Afficher Mimi {st.prefs.showMimi ? '(oui)' : '(non)'}
-          </button>
-          <div>
-            <div className="font-bold mb-1">Thème</div>
-            <div className="flex flex-wrap gap-2">
-              {unlockedThemes(st).map((t) => (
-                <button key={t.id} type="button" disabled={!t.unlocked} onClick={() => updatePrefs({ theme: t.id })} className={cx('rounded-xl border-2 px-2.5 py-1.5 text-sm font-bold flex items-center gap-1.5', st.prefs.theme === t.id ? 'border-ink' : 'border-line', !t.unlocked && 'opacity-50')}>
-                  <span className="w-4 h-4 rounded-full" style={{ background: t.brand }} /> {t.label}
-                  {!t.unlocked && ` 🔒 ${t.unlockLessons} leçons`}
-                </button>
-              ))}
-            </div>
-          </div>
-          <Link to="/personnaliser" className="block text-sm font-bold text-brand underline">
-            Personnaliser les messages et les lettres
+          <p className="text-xs text-ink-2">Les animations sont réduites au minimum et respectent le réglage « réduire les mouvements » du système.</p>
+          <Link to="/a-propos" className="block text-sm font-medium text-brand hover:underline">
+            À propos de la plateforme et de ses conventions
           </Link>
         </Card>
         <Card className="space-y-3 md:col-span-2">
-          <h2 className="font-extrabold">Sauvegarde de la progression</h2>
+          <h2 className="font-semibold">Sauvegarde de la progression</h2>
           <p className="text-sm text-ink-2">
             Ta progression est enregistrée automatiquement dans ce navigateur (sans compte). Pour ne rien perdre (changement d’ordinateur, nettoyage du navigateur), exporte-la de temps en temps.
           </p>
           <div className="flex flex-wrap gap-2">
-            <Button onClick={download}>⬇️ Exporter ma progression</Button>
+            <Button onClick={download}>Exporter ma progression</Button>
             <Button variant="soft" onClick={() => file.current?.click()}>
-              ⬆️ Importer une sauvegarde
+              Importer une sauvegarde
             </Button>
             <input ref={file} type="file" accept="application/json,.json" className="hidden" onChange={(e) => e.target.files?.[0] && onImport(e.target.files[0])} />
             <Button variant="ghost" onClick={() => setConfirmReset(true)}>

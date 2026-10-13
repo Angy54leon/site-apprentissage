@@ -1,5 +1,5 @@
 // Mesure du temps d'apprentissage ACTIF : on ne compte que le temps où la page est
-// visible et où Julie a interagi récemment (moins de 90 s d'inactivité).
+// visible et où l'utilisateur a interagi récemment (moins de 90 s d'inactivité).
 import { useEffect } from 'react';
 import { addActiveTime } from '../state/store';
 

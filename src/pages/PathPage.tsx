@@ -1,118 +1,147 @@
 import { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { LESSONS, lessonsOfModule } from '../content/lessons';
-import { MODULES } from '../content/skills';
+import { Link } from 'react-router-dom';
+import { CHAPTERS, CHAPTER_BY_ID } from '../content/chapters';
+import { LESSON_BY_ID, LESSONS } from '../content/lessons';
+import { SKILL_BY_ID } from '../content/skills';
 import { useAppState } from '../state/store';
-import { moduleProgress, nextRecommendedLesson } from '../state/stats';
-import { Button, Card, Modal, PageTitle, Pill, ProgressBar, cx } from '../ui/kit';
+import { chapterCompleted, chapterProgress, chapterSkills, currentChapter, nextRecommendedLesson, skillStats } from '../state/stats';
+import { Button, Card, PageTitle, Pill, ProgressBar, cx } from '../ui/kit';
+import { Icon } from '../ui/icons';
+
+const DIFF_TONE = { Fondamental: 'neutral', Débutant: 'info', Intermédiaire: 'info', Avancé: 'warn', Examen: 'bad' } as const;
 
 export function PathPage() {
   const st = useAppState();
-  const nav = useNavigate();
   const next = nextRecommendedLesson(st);
-  const [confirm, setConfirm] = useState<string | null>(null);
-  const available = (id: string) => {
-    const i = LESSONS.findIndex((l) => l.id === id);
-    if (i <= 0) return true;
-    const l = LESSONS[i];
-    if (st.lessons[id]) return true;
-    if (st.profile.seenModules.includes(l.module)) return true;
-    return st.lessons[LESSONS[i - 1].id]?.status === 'completed';
-  };
-  const open = (id: string) => (available(id) ? nav(`/lecon/${id}`) : setConfirm(id));
+  const current = currentChapter(st);
+  const [open, setOpen] = useState<string>(current.id);
   return (
     <div>
-      <PageTitle emoji="🗺️" sub="Les chapitres sont dans un ordre progressif. Chaque leçon : explication, règle, exemple résolu, pièges, exercices guidés et autonomes, mini-test, résumé.">
+      <PageTitle sub="Douze chapitres progressifs, des bases absolues jusqu’à la préparation aux examens. Les prérequis sont indiqués à titre de conseil : tous les chapitres restent accessibles pour réviser librement.">
         Parcours d’apprentissage
       </PageTitle>
-      <div className="space-y-5">
-        {MODULES.map((m) => {
-          const prog = moduleProgress(st, m.id);
+      <ol className="space-y-3">
+        {CHAPTERS.map((c) => {
+          const prog = chapterProgress(st, c);
+          const done = chapterCompleted(st, c);
+          const missing = c.prerequisites.filter((p) => !chapterCompleted(st, CHAPTER_BY_ID[p]));
+          const isOpen = open === c.id;
+          const isCurrent = current.id === c.id;
           return (
-            <Card key={m.id}>
-              <div className="flex flex-wrap items-end justify-between gap-2 mb-3">
-                <div>
-                  <h2 className="text-lg font-extrabold">{m.title}</h2>
-                  <p className="text-sm text-ink-2">{m.description}</p>
-                </div>
-                <span className="text-sm font-bold text-ink-2">
-                  {prog.done}/{prog.total} leçons
-                </span>
-              </div>
-              <ProgressBar value={prog.total ? prog.done / prog.total : 0} className="mb-3" />
-              <ol className="grid sm:grid-cols-2 gap-2">
-                {lessonsOfModule(m.id).map((l) => {
-                  const p = st.lessons[l.id];
-                  const isNext = next?.id === l.id;
-                  const ok = available(l.id);
-                  return (
-                    <li key={l.id}>
-                      <button
-                        type="button"
-                        onClick={() => open(l.id)}
-                        className={cx(
-                          'w-full text-left rounded-2xl border-2 px-3 py-2.5 flex items-center gap-3 transition',
-                          isNext ? 'border-brand bg-brand-soft/25' : 'border-line bg-surface hover:border-brand-2',
+            <li key={c.id}>
+              <Card className={cx('!p-0 overflow-hidden', isCurrent && 'ring-1 ring-brand')}>
+                <button type="button" onClick={() => setOpen(isOpen ? '' : c.id)} className="w-full flex items-center gap-4 p-4 text-left hover:bg-surface-2/60" aria-expanded={isOpen}>
+                  <span className={cx('grid h-10 w-10 shrink-0 place-items-center rounded-lg text-sm font-semibold', done ? 'bg-ok text-white' : isCurrent ? 'bg-brand text-white' : 'bg-surface-2 text-ink-2')}>
+                    {done ? <Icon name="check" /> : c.number}
+                  </span>
+                  <span className="flex-1 min-w-0">
+                    <span className="flex flex-wrap items-center gap-2">
+                      <span className="font-semibold">{c.title}</span>
+                      <Pill tone={DIFF_TONE[c.difficulty]}>{c.difficulty}</Pill>
+                      {isCurrent && <Pill tone="brand">En cours</Pill>}
+                    </span>
+                    <span className="mt-1.5 flex items-center gap-3">
+                      <ProgressBar value={prog.total ? prog.done / prog.total : 0} className="flex-1 max-w-xs" />
+                      <span className="text-xs text-ink-2 tabular-nums">
+                        {prog.done}/{prog.total} leçon{prog.total > 1 ? 's' : ''}
+                      </span>
+                    </span>
+                  </span>
+                  <Icon name="arrowRight" className={cx('text-ink-3 transition-transform', isOpen && 'rotate-90')} />
+                </button>
+                {isOpen && (
+                  <div className="border-t border-line p-4 grid gap-5 md:grid-cols-[1fr_1.3fr]">
+                    <div className="space-y-4 text-sm">
+                      <div>
+                        <div className="text-xs font-medium uppercase tracking-wide text-ink-2 mb-1">Objectifs</div>
+                        <ul className="list-disc pl-5 space-y-0.5">
+                          {c.objectives.map((o) => (
+                            <li key={o}>{o}</li>
+                          ))}
+                        </ul>
+                      </div>
+                      <div>
+                        <div className="text-xs font-medium uppercase tracking-wide text-ink-2 mb-1">Prérequis</div>
+                        {c.prerequisites.length ? (
+                          <ul className="space-y-0.5">
+                            {c.prerequisites.map((p) => (
+                              <li key={p} className="flex items-center gap-2">
+                                <span className={chapterCompleted(st, CHAPTER_BY_ID[p]) ? 'text-ok' : 'text-ink-3'}>
+                                  <Icon name={chapterCompleted(st, CHAPTER_BY_ID[p]) ? 'check' : 'info'} size={15} />
+                                </span>
+                                Chapitre {CHAPTER_BY_ID[p].number} — {CHAPTER_BY_ID[p].title}
+                              </li>
+                            ))}
+                          </ul>
+                        ) : (
+                          <p className="text-ink-2">Aucun : point de départ du parcours.</p>
                         )}
-                      >
-                        <span className={cx('w-9 h-9 shrink-0 rounded-xl grid place-items-center font-black', p?.status === 'completed' ? 'bg-ok text-white' : ok ? 'bg-surface-2' : 'bg-surface-2 text-ink-3')}>
-                          {p?.status === 'completed' ? '✓' : ok ? LESSONS.indexOf(l) + 1 : '🔒'}
-                        </span>
-                        <span className="flex-1">
-                          <span className="block font-bold leading-tight">{l.title}</span>
-                          <span className="text-xs text-ink-2">
-                            ~{l.duration} min
-                            {p?.status === 'completed' && p.via === 'placement' ? ' · acquis au test (à confirmer)' : ''}
-                            {p?.status === 'in-progress' ? ` · en cours (étape ${p.step + 1}/8)` : ''}
-                            {p?.quizBest !== undefined ? ` · mini-test : ${Math.round(p.quizBest * 100)} %` : ''}
-                          </span>
-                        </span>
-                        {l.advanced && <Pill tone="warn">avancé</Pill>}
-                        {isNext && <Pill tone="brand">à faire</Pill>}
-                      </button>
-                    </li>
-                  );
-                })}
-                {m.id === 'm6' && (
-                  <>
-                    <li>
-                      <Button to="/entrainement?chrono=1" variant="soft" className="w-full justify-start">
-                        ⏱️ Entraînement chronométré
-                      </Button>
-                    </li>
-                    <li>
-                      <Button to="/examens" variant="soft" className="w-full justify-start">
-                        📝 Examens blancs avec barème
-                      </Button>
-                    </li>
-                    <li>
-                      <Button to="/erreurs" variant="soft" className="w-full justify-start">
-                        📒 Révision ciblée de mes erreurs
-                      </Button>
-                    </li>
-                    <li>
-                      <Button to="/entrainement?mix=1" variant="soft" className="w-full justify-start">
-                        🎲 Exercices mélangés sans indice
-                      </Button>
-                    </li>
-                  </>
+                        {missing.length > 0 && <p className="text-xs text-warn mt-1">Conseil : valide d’abord le chapitre {CHAPTER_BY_ID[missing[0]].number}, mais tu peux consulter celui-ci dès maintenant.</p>}
+                      </div>
+                      <div>
+                        <div className="text-xs font-medium uppercase tracking-wide text-ink-2 mb-1">Compétences travaillées</div>
+                        <div className="flex flex-wrap gap-1">
+                          {chapterSkills(c).map((s) => {
+                            const status = skillStats(st, s).status;
+                            return (
+                              <Pill key={s} tone={status === 'maitrisee' ? 'ok' : status === 'a-revoir' ? 'warn' : 'neutral'}>
+                                {SKILL_BY_ID[s].label}
+                              </Pill>
+                            );
+                          })}
+                        </div>
+                      </div>
+                    </div>
+                    <div>
+                      <div className="text-xs font-medium uppercase tracking-wide text-ink-2 mb-1">Leçons</div>
+                      <ol className="space-y-1.5">
+                        {c.lessons.map((id) => {
+                          const l = LESSON_BY_ID[id];
+                          const p = st.lessons[id];
+                          const isNext = next?.id === id;
+                          return (
+                            <li key={id}>
+                              <Link to={`/lecon/${id}`} className={cx('flex items-center gap-3 rounded-lg border px-3 py-2 hover:border-brand', isNext ? 'border-brand bg-brand-soft' : 'border-line')}>
+                                <span className={cx('grid h-6 w-6 shrink-0 place-items-center rounded-full text-[11px] font-semibold', p?.status === 'completed' ? 'bg-ok text-white' : 'bg-surface-2 text-ink-2')}>
+                                  {p?.status === 'completed' ? <Icon name="check" size={13} /> : LESSONS.indexOf(l) + 1}
+                                </span>
+                                <span className="flex-1 min-w-0">
+                                  <span className="block font-medium text-sm leading-tight">{l.title}</span>
+                                  <span className="text-xs text-ink-2">
+                                    ~{l.duration} min
+                                    {p?.status === 'completed' && p.via === 'placement' ? ' · acquis au test de positionnement' : ''}
+                                    {p?.status === 'in-progress' ? ` · en cours (étape ${p.step + 1}/8)` : ''}
+                                    {p?.quizBest !== undefined ? ` · quiz : ${Math.round(p.quizBest * 100)} %` : ''}
+                                  </span>
+                                </span>
+                                {l.advanced && <Pill tone="warn">Option</Pill>}
+                                {isNext && <Pill tone="brand">Recommandée</Pill>}
+                              </Link>
+                            </li>
+                          );
+                        })}
+                      </ol>
+                      {c.id === 'c12' && (
+                        <div className="mt-3 flex flex-wrap gap-2">
+                          <Button to="/examens" size="sm" variant="soft">
+                            Examens blancs
+                          </Button>
+                          <Button to="/exercices?vue=libre&chrono=1" size="sm" variant="soft">
+                            Entraînement chronométré
+                          </Button>
+                          <Button to="/erreurs" size="sm" variant="soft">
+                            Révision ciblée des erreurs
+                          </Button>
+                        </div>
+                      )}
+                    </div>
+                  </div>
                 )}
-              </ol>
-            </Card>
+              </Card>
+            </li>
           );
         })}
-      </div>
-      <Modal open={!!confirm} onClose={() => setConfirm(null)} title="Leçon pas encore débloquée">
-        <p className="text-ink-2">
-          Les leçons s’appuient sur les précédentes. Tu peux quand même l’ouvrir si tu as déjà vu cette notion en cours.
-        </p>
-        <div className="mt-4 flex gap-2 justify-end">
-          <Button variant="soft" onClick={() => setConfirm(null)}>
-            Plus tard
-          </Button>
-          <Button onClick={() => nav(`/lecon/${confirm}`)}>Ouvrir quand même</Button>
-        </div>
-      </Modal>
+      </ol>
     </div>
   );
 }

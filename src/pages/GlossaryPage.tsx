@@ -11,15 +11,15 @@ export function GlossaryPage() {
   const list = GLOSSARY.filter((g) => norm(g.term + ' ' + g.definition).includes(norm(q))).sort((a, b) => norm(a.term).localeCompare(norm(b.term)));
   return (
     <div className="max-w-3xl">
-      <PageTitle emoji="📚" sub={`${GLOSSARY.length} termes essentiels, avec un lien vers la leçon correspondante.`}>
+      <PageTitle sub={`${GLOSSARY.length} termes essentiels, avec un lien vers la leçon correspondante.`}>
         Glossaire de chimie organique
       </PageTitle>
-      <input value={q} onChange={(e) => setQ(e.target.value)} placeholder="Rechercher un terme (ex. : chaîne, ester, élision…)" className="w-full rounded-2xl border-2 border-line bg-surface px-4 py-3 mb-4 focus:border-brand-2 outline-none" aria-label="Rechercher dans le glossaire" />
+      <input value={q} onChange={(e) => setQ(e.target.value)} placeholder="Rechercher un terme (ex. : chaîne, ester, élision…)" className="w-full rounded-lg border border-line bg-surface px-4 py-3 mb-4 focus:border-brand-2 outline-none" aria-label="Rechercher dans le glossaire" />
       {!list.length && <Empty>Aucun terme trouvé.</Empty>}
       <dl className="grid gap-2">
         {list.map((g) => (
           <Card key={g.term} className="!p-4">
-            <dt className="font-extrabold">{g.term}</dt>
+            <dt className="font-semibold">{g.term}</dt>
             <dd className="text-ink-2">{g.definition}</dd>
             {g.lesson && LESSON_BY_ID[g.lesson] && (
               <dd className="mt-1 text-sm">

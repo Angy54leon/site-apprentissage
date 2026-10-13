@@ -61,6 +61,7 @@ export const M1: Lesson[] = [
       { t: 'warn', text: 'Piège classique : la chaîne la plus longue n’est pas forcément celle dessinée à l’horizontale. Elle peut passer par ce qui ressemble à une « ramification ».' },
       { t: 'mol', smiles: 'CC(CC)CCC', show: ['chain'], asWritten: true, caption: 'La chaîne principale (6 C) passe par le « bras » éthyle.' },
       { t: 'p', text: 'Si **deux chaînes ont la même longueur**, on choisit celle qui porte le **plus de substituants**.' },
+      { t: 'info', title: 'Vocabulaire utilisé ici', text: 'Un substituant –CH₃ s’appelle **méthyle** (« méthyl » dans un nom) et –CH₂–CH₃ **éthyle**. Les groupes alkyles sont détaillés au chapitre suivant.' },
     ],
     rule: [{ t: 'list', ordered: true, items: ['Chaîne la plus longue.', 'À égalité : celle qui porte le plus de substituants.'] }],
     worked: { smiles: 'CC(CCC)CC(C)C', intro: 'Cherchons la chaîne principale de cette molécule.' },

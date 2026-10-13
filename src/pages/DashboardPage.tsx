@@ -1,24 +1,45 @@
-import { useEffect, useState } from 'react';
+import { useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import { LOVE, MESSAGES } from '../config/love';
-import { SKILLS, SKILL_BY_ID } from '../content/skills';
+import { STUDY_TIPS } from '../config/app';
 import { LESSONS } from '../content/lessons';
-import { useAppState, pickMessage, snapshotTodayPlan, type VisitInfo } from '../state/store';
-import { completedLessons, currentModule, firstAttempts, globalProgress, levelLabel, nextRecommendedLesson, allSkillStats, rate, readiness, totalActiveMinutes } from '../state/stats';
-import { buildPlan, daysUntilExam, todaysTasks, DAY_TYPE_LABEL } from '../state/planner';
+import { SKILLS, SKILL_BY_ID } from '../content/skills';
+import { chapterOfLesson } from '../content/chapters';
+import { useAppState, snapshotTodayPlan } from '../state/store';
+import {
+  allSkillStats,
+  chapterProgress,
+  chapterRates,
+  completedLessons,
+  currentChapter,
+  firstAttempts,
+  globalProgress,
+  history,
+  lessonInProgress,
+  levelLabel,
+  nextRecommendedLesson,
+  rate,
+  readiness,
+  totalActiveMinutes,
+} from '../state/stats';
+import { daysUntilExam, todaysTasks } from '../state/planner';
 import { overdueSkills, dueSkills } from '../state/srs';
-import { formatDate, shortDay, today } from '../state/dates';
-import { mimiStage } from '../state/rewards';
-import { Button, Card, HeartProgress, Pill, ProgressBar, Stat, pct, cx } from '../ui/kit';
-import { MimiSays, LoveNote } from '../ui/love';
+import { diffDays, formatDate, today } from '../state/dates';
+import { Button, Card, Pill, ProgressBar, RingProgress, SectionTitle, Stat, pct, cx } from '../ui/kit';
+import { BarChart, HBar } from '../ui/charts';
+import { Icon } from '../ui/icons';
 
-export function DashboardPage({ visit }: { visit: VisitInfo }) {
+const TASK_ICON = { review: 'review', lesson: 'book', practice: 'pencil', mistakes: 'mistakes', exam: 'exam' } as const;
+const TASK_WHY: Record<string, string> = {
+  review: 'Notions arrivées à échéance dans ton programme de révision espacée.',
+  lesson: 'Prochaine étape du parcours.',
+  practice: 'Application immédiate des notions de la leçon.',
+  mistakes: 'Retravailler les erreurs encore non comprises.',
+  exam: 'Évaluation en conditions d’examen.',
+};
+
+export function DashboardPage() {
   const st = useAppState();
-  const [msg, setMsg] = useState('');
   const t = today();
-  useEffect(() => {
-    setMsg(pickMessage(visit.comeback ? 'comeback' : 'motivation'));
-  }, [visit.comeback]);
   const tasks = todaysTasks(st);
   useEffect(() => {
     snapshotTodayPlan(tasks);
@@ -27,181 +48,228 @@ export function DashboardPage({ visit }: { visit: VisitInfo }) {
   const log = st.days[t];
   const done = log?.tasksDone ?? [];
   const sessionDone = !!log?.sessionDone;
-  const g = st.profile.goal;
-  const active = log?.activeMs ?? { lesson: 0, exercise: 0, review: 0 };
   const stats = allSkillStats(st);
-  const mastered = stats.filter((s) => s.status === 'maitrisee').length;
-  const toReview = stats.filter((s) => s.status === 'a-revoir');
+  const mastered = stats.filter((s) => s.status === 'maitrisee');
   const overdue = overdueSkills(st, t);
+  const due = dueSkills(st, t);
+  const weak = stats.filter((s) => s.status === 'a-revoir');
+  const priorities = [
+    ...overdue.map((s) => ({ skill: s, reason: `Révision en retard de ${diffDays(t, st.skills[s].due)} j` })),
+    ...weak.filter((s) => !overdue.includes(s.skill)).map((s) => ({ skill: s.skill, reason: `Réussite récente ${pct(s.recentRate)}` })),
+    ...due.filter((s) => !overdue.includes(s) && !weak.some((w) => w.skill === s)).map((s) => ({ skill: s, reason: 'Révision prévue aujourd’hui' })),
+  ].slice(0, 6);
   const next = nextRecommendedLesson(st);
-  const mod = currentModule(st);
+  const inProgress = lessonInProgress(st);
+  const resume = inProgress ?? next;
+  const chapter = currentChapter(st);
+  const cp = chapterProgress(st, chapter);
   const first = firstAttempts(st);
-  const successes = first.filter((a) => a.status === 'correct').length;
   const examIn = daysUntilExam(st);
   const ready = readiness(st);
-  const week = buildPlan(st, 7).days;
-  const calendarNote = st.love.calendar.find((c) => c.date === t);
-  const stage = mimiStage(st);
+  const hist = history(st, 14);
+  const rates = chapterRates(st);
+  const tip = STUDY_TIPS[new Date().getDate() % STUDY_TIPS.length];
 
   return (
-    <div className="space-y-5">
-      <section className="anim-fade">
-        <h1 className="text-2xl sm:text-3xl font-extrabold">Coucou {LOVE.firstName}, prête pour une nouvelle petite victoire ? <span className="decor">💗</span></h1>
-        {msg && <LoveNote className="mt-1">{msg}</LoveNote>}
-      </section>
+    <div className="space-y-6">
+      <header className="flex flex-wrap items-end justify-between gap-3">
+        <div>
+          <h1 className="text-2xl sm:text-[28px] font-bold tracking-tight">Tableau de bord</h1>
+          <p className="text-ink-2 mt-1">
+            {formatDate(t)}
+            {examIn !== null && examIn >= 0 ? ` · examen dans ${examIn} jour${examIn > 1 ? 's' : ''}` : ''}
+          </p>
+        </div>
+        <Button to="/seance" size="lg">
+          <Icon name="play" size={16} /> {sessionDone ? 'Revoir ma séance' : 'Commencer ma séance'}
+        </Button>
+      </header>
 
-      <div className="grid gap-5 lg:grid-cols-[1.4fr_1fr]">
-        {/* objectif du jour */}
-        <Card className="relative overflow-hidden">
-          <div className="flex items-start justify-between gap-3">
-            <div>
-              <h2 className="text-xl font-extrabold">Notre petit objectif du jour <span className="decor">💕</span></h2>
-              <p className="text-sm text-ink-2">{formatDate(t)} · environ {g.lessonMin + g.exerciseMin + g.reviewMin} min</p>
-            </div>
-            {sessionDone && <Pill tone="ok">Séance terminée ✓</Pill>}
+      <div className="grid gap-6 lg:grid-cols-3">
+        <Card className="lg:col-span-2">
+          <SectionTitle>Reprendre mon apprentissage</SectionTitle>
+          <div className="flex flex-wrap items-start gap-2 mb-1">
+            <span className="text-sm text-ink-2">Chapitre {chapter.number} sur 12</span>
+            <Pill tone="info">{chapter.difficulty}</Pill>
           </div>
-          <div className="mt-4 grid sm:grid-cols-3 gap-3">
-            {(
-              [
-                ['📖 Cours', active.lesson, g.lessonMin],
-                ['✏️ Exercices', active.exercise, g.exerciseMin],
-                ['🔁 Révision', active.review, g.reviewMin],
-              ] as [string, number, number][]
-            ).map(([l, ms, min]) => (
-              <div key={l} className="rounded-2xl bg-surface-2 border border-line p-3">
-                <div className="text-sm font-bold">{l}</div>
-                <div className="text-xs text-ink-2 mb-1.5">
-                  {Math.round(ms / 60000)} / {min} min actives
+          <h3 className="text-xl font-semibold">{chapter.title}</h3>
+          <div className="flex items-center gap-3 mt-2">
+            <ProgressBar value={cp.total ? cp.done / cp.total : 0} className="flex-1" label="Progression du chapitre" />
+            <span className="text-sm text-ink-2 tabular-nums">
+              {cp.done}/{cp.total} leçons
+            </span>
+          </div>
+          {resume ? (
+            <div className="mt-4 flex flex-wrap items-center justify-between gap-3 rounded-lg border border-line bg-surface-2 p-4">
+              <div>
+                <div className="text-xs font-medium uppercase tracking-wide text-ink-2">{inProgress ? 'Leçon en cours' : 'Prochaine leçon recommandée'}</div>
+                <div className="font-semibold mt-0.5">{resume.title}</div>
+                <div className="text-sm text-ink-2">
+                  ~{resume.duration} min
+                  {inProgress && st.lessons[inProgress.id] ? ` · étape ${st.lessons[inProgress.id].step + 1} sur 8` : ''}
+                  {chapterOfLesson(resume.id) && chapterOfLesson(resume.id)!.id !== chapter.id ? ` · chapitre ${chapterOfLesson(resume.id)!.number}` : ''}
                 </div>
-                <ProgressBar value={min ? ms / (min * 60000) : 1} />
               </div>
-            ))}
-          </div>
-          <ul className="mt-4 space-y-1.5">
-            {tasks.map((task) => (
-              <li key={task.id} className="flex items-center gap-2 text-sm">
-                <span className={cx('w-5 h-5 rounded-full grid place-items-center text-xs font-black', done.includes(task.id) ? 'bg-ok text-white' : 'border-2 border-line')}>{done.includes(task.id) ? '✓' : ''}</span>
-                <span className={cx(done.includes(task.id) && 'line-through text-ink-3')}>{task.title}</span>
-                <span className="ml-auto text-ink-3 text-xs">~{task.minutes} min</span>
-              </li>
-            ))}
-            {!tasks.length && <li className="text-sm text-ink-2">Rien de prévu aujourd’hui : profite de ta journée ! Tu peux quand même faire une petite séance libre.</li>}
-          </ul>
-          {sessionDone ? (
-            <p className="decor mt-4 font-hand text-2xl text-brand leading-snug">{MESSAGES.sessionDone[0]}</p>
-          ) : null}
-          <div className="mt-4 flex flex-wrap gap-2">
-            <Button to="/seance" size="lg">
-              {sessionDone ? 'Revoir ma séance' : 'Commencer ma séance du jour'} 💗
-            </Button>
-            <Button to="/reglages" variant="ghost" size="sm">
-              Modifier les durées
-            </Button>
-          </div>
+              <Button to={`/lecon/${resume.id}`}>
+                {inProgress ? 'Reprendre la leçon' : 'Commencer la leçon'} <Icon name="arrowRight" size={16} />
+              </Button>
+            </div>
+          ) : (
+            <p className="mt-4 text-sm text-ink-2">Toutes les leçons sont validées. Poursuis avec les examens blancs et les révisions.</p>
+          )}
+          <p className="mt-3 text-sm">
+            <Link to="/parcours" className="font-medium text-brand hover:underline">
+              Voir tout le parcours
+            </Link>
+          </p>
         </Card>
 
-        {/* progression */}
         <Card className="flex flex-col items-center text-center">
-          <HeartProgress value={globalProgress(st)} size={130} label="Progression globale" />
-          <div className="mt-1 font-extrabold">{levelLabel(st)}</div>
+          <SectionTitle>Progression globale</SectionTitle>
+          <RingProgress value={globalProgress(st)} sub="du parcours" />
+          <div className="mt-3 font-medium">{levelLabel(st)}</div>
           <p className="text-sm text-ink-2">
             {completedLessons(st)} leçon{completedLessons(st) > 1 ? 's' : ''} validée{completedLessons(st) > 1 ? 's' : ''} sur {LESSONS.length}
           </p>
-          <div className="mt-3 w-full text-left rounded-2xl bg-surface-2 p-3">
-            <div className="text-xs font-bold uppercase text-ink-3">Chapitre en cours</div>
-            <div className="font-bold">{mod.title}</div>
-            {next ? (
-              <>
-                <div className="text-xs font-bold uppercase text-ink-3 mt-2">Prochaine leçon recommandée</div>
-                <Link to={`/lecon/${next.id}`} className="font-bold text-brand underline">
-                  {next.title}
-                </Link>
-              </>
-            ) : (
-              <p className="text-sm mt-1">Tout le parcours est validé ! Place aux examens blancs. 🏆</p>
-            )}
-          </div>
-          <MimiSays className="mt-3 self-start" stage={stage} mood={sessionDone ? 'cheer' : 'happy'}>
-            {sessionDone ? 'Bravo pour aujourd’hui ! Je suis fière de toi (et lui encore plus). 💗' : MESSAGES.mimiTips[new Date().getDate() % MESSAGES.mimiTips.length]}
-          </MimiSays>
         </Card>
       </div>
 
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
-        <Stat label="Notions maîtrisées" value={`${mastered}/${SKILLS.length}`} hint="selon des critères exigeants" />
-        <Stat label="Exercices réussis" value={successes} hint={`sur ${first.length} faits`} />
-        <Stat label="Taux de réussite" value={pct(rate(first))} hint="premiers essais" />
-        <Stat label="Temps actif" value={`${totalActiveMinutes(st)} min`} hint="temps réellement mesuré" />
-      </div>
+      <div className="grid gap-6 lg:grid-cols-3">
+        <Card className="lg:col-span-2">
+          <SectionTitle actions={sessionDone ? <Pill tone="ok">Séance terminée</Pill> : <span className="text-sm text-ink-2">~{tasks.reduce((s, x) => s + x.minutes, 0)} min</span>}>
+            Programme du jour
+          </SectionTitle>
+          {tasks.length ? (
+            <ol className="space-y-2">
+              {tasks.map((task, i) => {
+                const isDone = done.includes(task.id);
+                return (
+                  <li key={task.id} className="flex items-start gap-3 rounded-lg border border-line p-3">
+                    <span className={cx('mt-0.5 grid h-6 w-6 shrink-0 place-items-center rounded-full text-xs font-semibold', isDone ? 'bg-ok text-white' : 'bg-surface-2 text-ink-2')}>
+                      {isDone ? <Icon name="check" size={14} /> : i + 1}
+                    </span>
+                    <div className="flex-1 min-w-0">
+                      <div className={cx('font-medium flex items-center gap-2', isDone && 'text-ink-2 line-through')}>
+                        <Icon name={TASK_ICON[task.kind]} size={16} className="text-ink-2" /> {task.title}
+                      </div>
+                      <div className="text-xs text-ink-2 mt-0.5">{TASK_WHY[task.kind]}</div>
+                    </div>
+                    <span className="text-xs text-ink-2 whitespace-nowrap">~{task.minutes} min</span>
+                  </li>
+                );
+              })}
+            </ol>
+          ) : (
+            <p className="text-sm text-ink-2">Aucune tâche planifiée aujourd’hui (jour de repos). Une séance libre reste possible.</p>
+          )}
+          <div className="mt-4 flex flex-wrap gap-2">
+            <Button to="/seance">{sessionDone ? 'Revoir ma séance' : 'Commencer ma séance'}</Button>
+            <Button to="/revisions?vue=planning" variant="soft">
+              <Icon name="calendar" size={16} /> Planning de la semaine
+            </Button>
+          </div>
+        </Card>
 
-      <div className="grid gap-5 lg:grid-cols-3">
         <Card>
-          <h2 className="font-extrabold mb-2">Notions à retravailler</h2>
-          {toReview.length || overdue.length ? (
-            <ul className="space-y-1 text-sm">
-              {[...new Set([...toReview.map((s) => s.skill), ...overdue])].slice(0, 7).map((s) => (
-                <li key={s} className="flex justify-between gap-2">
-                  <span>{SKILL_BY_ID[s]?.label}</span>
-                  {overdue.includes(s) ? <Pill tone="warn">en retard</Pill> : <Pill tone="bad">à revoir</Pill>}
+          <SectionTitle actions={due.length > 0 ? <Button to="/revisions" size="sm" variant="outline">Réviser</Button> : undefined}>
+            À retravailler en priorité
+          </SectionTitle>
+          {priorities.length ? (
+            <ul className="space-y-2">
+              {priorities.map((p) => (
+                <li key={p.skill} className="flex items-start justify-between gap-2 text-sm">
+                  <span className="font-medium">{SKILL_BY_ID[p.skill]?.label}</span>
+                  <span className={cx('text-xs text-right whitespace-nowrap', p.reason.startsWith('Révision en retard') ? 'text-warn' : p.reason.startsWith('Réussite') ? 'text-bad' : 'text-ink-2')}>{p.reason}</span>
                 </li>
               ))}
             </ul>
           ) : (
-            <p className="text-sm text-ink-2">Rien à signaler pour l’instant. Les notions ratées apparaîtront ici.</p>
+            <p className="text-sm text-ink-2">Aucune notion à retravailler pour l’instant. Les notions échouées ou à réviser apparaîtront ici, avec la raison.</p>
           )}
-          {dueSkills(st, t).length > 0 && (
-            <Button to="/revisions" variant="soft" size="sm" className="mt-3">
-              Réviser maintenant ({dueSkills(st, t).length})
-            </Button>
-          )}
-        </Card>
-
-        <Card>
-          <h2 className="font-extrabold mb-2">Mon examen</h2>
-          {examIn !== null ? (
-            <>
-              <p className="text-3xl font-black text-brand">{examIn > 0 ? `J − ${examIn}` : examIn === 0 ? 'C’est aujourd’hui !' : 'Passé'}</p>
-              <p className="text-sm text-ink-2">{formatDate(st.profile.examDate!)}</p>
-            </>
-          ) : (
-            <p className="text-sm text-ink-2">
-              Pas de date d’examen renseignée. <Link to="/reglages" className="underline font-bold">Ajouter une date</Link>
-            </p>
-          )}
-          <div className="mt-3">
-            <div className="flex justify-between text-sm font-bold">
-              <span>Préparation à l’examen</span>
-              <span>{pct(ready.value)}</span>
-            </div>
-            <ProgressBar value={ready.value} className="mt-1" />
-            <p className="text-xs text-ink-3 mt-1">
-              Couverture {pct(ready.coverage)} · notions solides {pct(ready.mastery)} · examen blanc {ready.exam === null ? 'pas encore fait' : pct(ready.exam)}
-            </p>
-          </div>
-        </Card>
-
-        <Card>
-          <div className="flex justify-between items-center mb-2">
-            <h2 className="font-extrabold">Ma semaine</h2>
-            <Link to="/planning" className="text-sm font-bold text-brand underline">
-              Planning
-            </Link>
-          </div>
-          <div className="grid grid-cols-7 gap-1">
-            {week.map((d) => (
-              <div key={d.date} className={cx('rounded-xl p-1.5 text-center border', d.date === t ? 'border-brand-2 bg-brand-soft/30' : 'border-line')} title={DAY_TYPE_LABEL[d.type]}>
-                <div className="text-[10px] uppercase font-bold text-ink-3">{shortDay(d.date)}</div>
-                <div className="text-base">{d.type === 'rest' ? '☁️' : d.type === 'light' ? '🌱' : d.type === 'revision' ? '🔁' : d.type === 'exam-prep' ? '📝' : d.type === 'exam' ? '🎓' : '📖'}</div>
-                <div className="text-[10px] text-ink-2">{d.minutes ? `${d.minutes}′` : ''}</div>
+          {mastered.length > 0 && (
+            <div className="mt-4 border-t border-line pt-3">
+              <div className="text-xs font-medium uppercase tracking-wide text-ink-2 mb-1">Notions maîtrisées</div>
+              <div className="flex flex-wrap gap-1">
+                {mastered.map((s) => (
+                  <Pill key={s.skill} tone="ok">
+                    {SKILL_BY_ID[s.skill].label}
+                  </Pill>
+                ))}
               </div>
+            </div>
+          )}
+        </Card>
+      </div>
+
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+        <Stat label="Exercices réalisés" value={first.length} hint={`${first.filter((a) => a.status === 'correct').length} réussis du premier coup`} />
+        <Stat label="Taux de réussite" value={pct(rate(first))} hint="premiers essais" />
+        <Stat label="Notions maîtrisées" value={`${mastered.length}/${SKILLS.length}`} hint="critères exigeants" />
+        <Stat label="Temps actif" value={`${totalActiveMinutes(st)} min`} hint="mesuré pendant le travail" />
+      </div>
+
+      <div className="grid gap-6 lg:grid-cols-2">
+        <Card>
+          <SectionTitle actions={<Link to="/statistiques" className="text-sm font-medium text-brand hover:underline">Détail</Link>}>Taux de réussite par chapitre</SectionTitle>
+          <div className="space-y-2">
+            {rates.map((r) => (
+              <HBar key={r.chapter.id} label={`${r.chapter.number}. ${r.chapter.title}`} value={r.rate} sub={`${r.attempts} exercices`} />
             ))}
           </div>
-          {calendarNote && (
-            <div className="decor mt-3 rounded-2xl bg-surface-2 p-3">
-              <div className="text-xs font-bold uppercase text-ink-3">Le petit mot du jour 💌</div>
-              <p className="font-hand text-xl text-brand leading-snug">{MESSAGES.calendar[calendarNote.index]}</p>
-            </div>
+        </Card>
+        <Card>
+          <SectionTitle>Historique des résultats (14 jours)</SectionTitle>
+          {first.length ? (
+            <BarChart
+              title="Exercices réalisés par jour"
+              data={hist.map((h) => ({
+                label: `${Number(h.date.slice(8))}/${h.date.slice(5, 7)}`,
+                value: h.attempts,
+                tip: `${formatDate(h.date)} : ${h.attempts} exercice(s)${h.rate !== null ? `, ${Math.round(h.rate * 100)} % de réussite` : ''}`,
+              }))}
+            />
+          ) : (
+            <p className="text-sm text-ink-2">Aucun exercice enregistré pour l’instant : l’historique se remplira avec tes résultats réels.</p>
           )}
+        </Card>
+      </div>
+
+      <div className="grid gap-6 lg:grid-cols-3">
+        <Card className="lg:col-span-2">
+          <SectionTitle>Préparation à l’examen</SectionTitle>
+          <div className="flex flex-wrap items-baseline gap-x-6 gap-y-1">
+            <span className="text-3xl font-bold tabular-nums">{pct(ready.value)}</span>
+            <span className="text-sm text-ink-2">
+              {st.profile.examDate ? `Examen le ${formatDate(st.profile.examDate)}` : (
+                <>
+                  Pas de date d’examen. <Link to="/reglages" className="font-medium text-brand hover:underline">Renseigner une date</Link>
+                </>
+              )}
+            </span>
+          </div>
+          <ProgressBar value={ready.value} className="mt-2" />
+          <dl className="mt-3 grid grid-cols-3 gap-3 text-sm">
+            <div>
+              <dt className="text-ink-2">Couverture du programme</dt>
+              <dd className="font-semibold">{pct(ready.coverage)}</dd>
+            </div>
+            <div>
+              <dt className="text-ink-2">Notions solides</dt>
+              <dd className="font-semibold">{pct(ready.mastery)}</dd>
+            </div>
+            <div>
+              <dt className="text-ink-2">Dernier examen blanc</dt>
+              <dd className="font-semibold">{ready.exam === null ? 'non passé' : pct(ready.exam)}</dd>
+            </div>
+          </dl>
+          <p className="text-xs text-ink-2 mt-2">Estimation calculée uniquement à partir de tes résultats enregistrés.</p>
+        </Card>
+        <Card>
+          <SectionTitle>Conseil de méthode</SectionTitle>
+          <p className="text-sm text-ink flex gap-2">
+            <Icon name="lightbulb" className="text-brand shrink-0 mt-0.5" />
+            {tip}
+          </p>
         </Card>
       </div>
     </div>
