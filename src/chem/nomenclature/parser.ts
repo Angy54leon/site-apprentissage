@@ -100,7 +100,6 @@ const STEM_RE = `(${STEM_ALT.map((x) => x.s).join('|')})`;
 const stemLength = (s: string) => PLAIN_STEMS.indexOf(s);
 
 const MULTS: Record<string, number> = { di: 2, tri: 3, tetra: 4, penta: 5, hexa: 6, bis: 2, tris: 3, tetrakis: 4 };
-const MULT_RE = '(di|tri|tetra|penta|hexa)?';
 const LOC = '\\d+(?:,\\d+)*';
 
 const SUFFIX_MAP: Record<string, SuffixType> = {
@@ -589,8 +588,8 @@ export function buildMolecule(p: ParsedName, opts: BuildOptions = {}): Molecule 
     bd.order = order;
   };
   if (p.parent.kind !== 'benzene') {
-    const enes = p.parent.enes ?? fill.get('ene') ?? (L === 2 ? [1] : null);
-    const ynes = p.parent.ynes ?? fill.get('yne') ?? (L === 2 ? [1] : null);
+    const enes: number[] | null = p.parent.enes ?? fill.get('ene') ?? (L === 2 ? [1] : null);
+    const ynes: number[] | null = p.parent.ynes ?? fill.get('yne') ?? (L === 2 ? [1] : null);
     if (enes === null || ynes === null) throw new NameParseError('Indice manquant', 'format');
     enes.forEach((l) => setOrder(l, 2, 'double liaison'));
     ynes.forEach((l) => setOrder(l, 3, 'triple liaison'));

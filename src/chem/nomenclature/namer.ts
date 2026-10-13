@@ -18,7 +18,6 @@ import {
   adjacency,
   bondOrder,
   findRings,
-  hydrogenCount,
   isConnected,
   valenceProblems,
   HALOGENS,
