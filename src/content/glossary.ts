@@ -1,0 +1,53 @@
+// Glossaire de chimie organique.
+export interface GlossaryEntry {
+  term: string;
+  definition: string;
+  lesson?: string;
+}
+
+export const GLOSSARY: GlossaryEntry[] = [
+  { term: 'Alcane', definition: 'Hydrocarbure saturé (uniquement des liaisons simples C–C), de formule CₙH₂ₙ₊₂. Terminaison -ane.', lesson: 'm1-racines' },
+  { term: 'Alcène', definition: 'Hydrocarbure possédant au moins une double liaison C=C. Terminaison -ène.', lesson: 'm2-alcenes' },
+  { term: 'Alcyne', definition: 'Hydrocarbure possédant au moins une triple liaison C≡C. Terminaison -yne.', lesson: 'm2-alcynes' },
+  { term: 'Alcool', definition: 'Composé portant un groupe hydroxyle –OH sur un carbone saturé. Suffixe -ol, préfixe hydroxy-.', lesson: 'm4-alcools' },
+  { term: 'Aldéhyde', definition: 'Composé portant le groupe –CHO en bout de chaîne. Suffixe -al, préfixe oxo-.', lesson: 'm4-aldehydes' },
+  { term: 'Alkoxy', definition: 'Groupe –O–R utilisé en préfixe pour nommer les éthers : méthoxy, éthoxy…', lesson: 'm4-ethers' },
+  { term: 'Alkyle (groupe)', definition: 'Substituant carboné dérivé d’un alcane : méthyle, éthyle, propyle… (on écrit « méthyl » dans un nom).', lesson: 'm1-alkyles' },
+  { term: 'Amide', definition: 'Composé portant le groupe –CO–N. Suffixe -amide.', lesson: 'm4-amides' },
+  { term: 'Amine', definition: 'Composé dans lequel un azote est lié à un ou plusieurs carbones (sans C=O). Suffixe -amine, préfixe amino-.', lesson: 'm4-amines' },
+  { term: 'Aromatique', definition: 'Se dit d’un cycle particulièrement stable comme le benzène (6 électrons π délocalisés).', lesson: 'm3-benzene' },
+  { term: 'Benzène', definition: 'Cycle de 6 carbones avec 3 doubles liaisons alternées, C₆H₆.', lesson: 'm3-benzene' },
+  { term: 'Carbone asymétrique', definition: 'Carbone lié à quatre substituants différents (stéréocentre). Configuration R ou S.', lesson: 'm5-rs' },
+  { term: 'Cétone', definition: 'Composé portant un C=O lié à deux carbones. Suffixe -one, préfixe oxo-.', lesson: 'm4-cetones' },
+  { term: 'Chaîne principale', definition: 'Chaîne carbonée qui donne la racine du nom : elle contient la fonction principale, le maximum de liaisons multiples, et est la plus longue.', lesson: 'm1-chaine-principale' },
+  { term: 'CIP (règles de)', definition: 'Règles de Cahn, Ingold et Prelog pour classer des substituants par priorité (numéro atomique, puis atomes suivants). Utilisées pour Z/E et R/S.', lesson: 'm2-ez' },
+  { term: 'Cycloalcane', definition: 'Alcane cyclique, CₙH₂ₙ. Préfixe cyclo- : cyclohexane.', lesson: 'm3-cycloalcanes' },
+  { term: 'Élision', definition: 'Suppression du « e » final de -ane, -ène, -yne devant une voyelle : propan-2-ol, but-3-én-2-ol.', lesson: 'm4-alcools' },
+  { term: 'Énantiomères', definition: 'Deux molécules images l’une de l’autre dans un miroir, non superposables (R et S).', lesson: 'm5-rs' },
+  { term: 'Ester', definition: 'Composé R–COO–R′. Nom : « …oate de …yle ».', lesson: 'm4-esters' },
+  { term: 'Éther-oxyde', definition: 'Composé R–O–R′. Nommé comme un alcane substitué par un groupe alkoxy.', lesson: 'm4-ethers' },
+  { term: 'Euphonique (a)', definition: '« a » ajouté pour faciliter la prononciation : buta-1,3-diène.', lesson: 'm2-plusieurs-insaturations' },
+  { term: 'Fonction (groupe caractéristique)', definition: 'Groupe d’atomes qui donne à la molécule ses propriétés et son nom (–OH, C=O, –COOH…).', lesson: 'm4-identifier-fonctions' },
+  { term: 'Formule brute', definition: 'Nombre de chaque type d’atome dans la molécule : C₂H₆O.', lesson: 'm0-chimie-organique' },
+  { term: 'Formule développée', definition: 'Représentation de tous les atomes et de toutes les liaisons.', lesson: 'm0-formules' },
+  { term: 'Formule semi-développée', definition: 'Représentation où les liaisons C–H ne sont pas dessinées : CH₃–CH₂–OH.', lesson: 'm0-formules' },
+  { term: 'Formule topologique', definition: 'Représentation en zigzag : chaque sommet est un carbone, les H des carbones sont implicites.', lesson: 'm0-topologique' },
+  { term: 'Halogène', definition: 'F, Cl, Br, I. En nomenclature : préfixes fluoro, chloro, bromo, iodo.', lesson: 'm4-halogenoalcanes' },
+  { term: 'Hétéroatome', definition: 'Atome autre que C et H (O, N, S, halogènes).', lesson: 'm0-atomes' },
+  { term: 'Hydrocarbure', definition: 'Composé constitué uniquement de carbone et d’hydrogène.', lesson: 'm1-racines' },
+  { term: 'Indice de position (locant)', definition: 'Numéro du carbone portant un substituant, une insaturation ou un groupe : le 2 de « propan-2-ol ».', lesson: 'm1-numerotation' },
+  { term: 'IUPAC', definition: 'Union internationale de chimie pure et appliquée, qui fixe les règles de nomenclature.', lesson: 'm5-methode-generale' },
+  { term: 'Isomères', definition: 'Molécules de même formule brute mais de structures différentes.', lesson: 'm0-chimie-organique' },
+  { term: 'Liaison covalente', definition: 'Mise en commun d’une paire d’électrons entre deux atomes. Simple, double ou triple.', lesson: 'm0-valence' },
+  { term: 'Multiplicateur', definition: 'di, tri, tétra… indiquant plusieurs substituants identiques. Ignoré pour l’ordre alphabétique.', lesson: 'm1-multiplicateurs' },
+  { term: 'Nitrile', definition: 'Composé portant le groupe –C≡N. Suffixe -nitrile, préfixe cyano-.', lesson: 'm4-nitriles' },
+  { term: 'Nom usuel', definition: 'Nom historique (acétone, toluène…), différent du nom systématique IUPAC.', lesson: 'm5-noms-usuels' },
+  { term: 'Phényle', definition: 'Le groupe C₆H₅– (benzène utilisé comme substituant).', lesson: 'm3-benzene' },
+  { term: 'Premier point de différence', definition: 'Règle de comparaison des indices : on compare terme à terme, le premier plus petit l’emporte (pas de somme).', lesson: 'm1-numerotation' },
+  { term: 'Ramification (substituant)', definition: 'Groupe fixé sur la chaîne principale.', lesson: 'm0-chaines' },
+  { term: 'Saturé', definition: 'Qui ne contient que des liaisons simples.', lesson: 'm0-chaines' },
+  { term: 'Suffixe', definition: 'Terminaison du nom indiquant la fonction principale : -ol, -al, -one, -oïque…', lesson: 'm4-polyfonctionnels' },
+  { term: 'Tétravalent', definition: 'Qui forme 4 liaisons : c’est le cas du carbone.', lesson: 'm0-valence' },
+  { term: 'Valence', definition: 'Nombre de liaisons qu’un atome forme : H 1, O 2, N 3, C 4.', lesson: 'm0-valence' },
+  { term: 'Z / E', definition: 'Descripteurs d’une double liaison : Z si les substituants prioritaires sont du même côté, E s’ils sont opposés.', lesson: 'm2-ez' },
+];
