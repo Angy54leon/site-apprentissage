@@ -39,27 +39,39 @@ function childrenOf(mol: Molecule, adj: number[][], node: CipNode): CipNode[] {
   return out;
 }
 
-function compareNodes(mol: Molecule, adj: number[][], A: CipNode, B: CipNode, depth: number): number {
+/** Comparaison hiérarchique, sphère par sphère (règle 1 des règles CIP). */
+function compareNodes(mol: Molecule, adj: number[][], A: CipNode, B: CipNode): number {
   if (A.z !== B.z) return A.z - B.z;
-  if (depth > 8) return 0;
-  const ca = sortChildren(mol, adj, childrenOf(mol, adj, A), depth);
-  const cb = sortChildren(mol, adj, childrenOf(mol, adj, B), depth);
-  const n = Math.max(ca.length, cb.length);
-  for (let i = 0; i < n; i++) {
-    const za = ca[i]?.z ?? 0;
-    const zb = cb[i]?.z ?? 0;
-    if (za !== zb) return za - zb;
-  }
-  for (let i = 0; i < n; i++) {
-    if (!ca[i] || !cb[i]) continue;
-    const c = compareNodes(mol, adj, ca[i], cb[i], depth + 1);
-    if (c) return c;
+  const order = (nodes: CipNode[]) =>
+    nodes
+      .map((n) => ({ n, kids: childrenOf(mol, adj, n).map((c) => c.z).sort((x, y) => y - x) }))
+      .sort((x, y) => {
+        if (x.n.z !== y.n.z) return y.n.z - x.n.z;
+        for (let i = 0; i < Math.max(x.kids.length, y.kids.length); i++) {
+          const d = (y.kids[i] ?? 0) - (x.kids[i] ?? 0);
+          if (d) return d;
+        }
+        return 0;
+      })
+      .map((x) => x.n);
+  let la: CipNode[] = [A];
+  let lb: CipNode[] = [B];
+  for (let depth = 0; depth < 12; depth++) {
+    const ga = la.map((n) => order(childrenOf(mol, adj, n)));
+    const gb = lb.map((n) => order(childrenOf(mol, adj, n)));
+    for (let i = 0; i < Math.max(ga.length, gb.length); i++) {
+      const xa = ga[i] ?? [];
+      const xb = gb[i] ?? [];
+      for (let j = 0; j < Math.max(xa.length, xb.length, 3); j++) {
+        const d = (xa[j]?.z ?? 0) - (xb[j]?.z ?? 0);
+        if (d) return d;
+      }
+    }
+    la = ga.flat();
+    lb = gb.flat();
+    if (!la.length && !lb.length) return 0;
   }
   return 0;
-}
-
-function sortChildren(mol: Molecule, adj: number[][], nodes: CipNode[], depth: number): CipNode[] {
-  return [...nodes].sort((x, y) => -compareNodes(mol, adj, x, y, depth + 1));
 }
 
 /**
@@ -81,8 +93,8 @@ export function cipRanking(mol: Molecule, center: number, subs?: number[]): numb
     for (let h = 0; h < hydrogenCount(mol, center); h++)
       nodes.push({ z: 1, atom: -1, from: center, path: new Set([center]), duplicate: false });
   }
-  const sorted = [...nodes].sort((x, y) => -compareNodes(mol, adj, x, y, 0));
-  for (let i = 1; i < sorted.length; i++) if (compareNodes(mol, adj, sorted[i - 1], sorted[i], 0) === 0) return null;
+  const sorted = [...nodes].sort((x, y) => -compareNodes(mol, adj, x, y));
+  for (let i = 1; i < sorted.length; i++) if (compareNodes(mol, adj, sorted[i - 1], sorted[i]) === 0) return null;
   return sorted.map((n) => n.atom);
 }
 
